@@ -1,8 +1,8 @@
-import React from 'react';
-import { Navigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import React from "react";
+import { Navigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
-export const PrivateRoute = ({ children, permissoes }) => {
+const PrivateRoute = ({ children, permissoes }) => {
   const { estaAutenticado, temPermissao, loading } = useAuth();
 
   if (loading) {
@@ -26,3 +26,5 @@ export const PrivateRoute = ({ children, permissoes }) => {
 
   return children;
 };
+
+export default PrivateRoute;

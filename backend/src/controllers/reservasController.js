@@ -1,5 +1,4 @@
-const { PrismaClient } = require('@prisma/client');
-const prisma = new PrismaClient();
+const prisma = require('../lib/prisma');
 
 const { gerarNumeroReserva } = require('../utils/gerador');
 
@@ -178,10 +177,9 @@ const reservasController = {
         }
       });
 
-      // Atualizar reserva com ID da comanda
-      const reservaAtualizada = await prisma.reserva.update({
+      // Buscar a reserva com a comanda criada pela relação via reservaId
+      const reservaAtualizada = await prisma.reserva.findUnique({
         where: { id: reserva.id },
-        data: { comandaId: comanda.id },
         include: { usuario: true, quadra: true, comanda: true }
       });
 
@@ -246,7 +244,8 @@ const reservasController = {
       const { id: usuarioLogado, perfil } = req.usuario;
 
       const reserva = await prisma.reserva.findUnique({
-        where: { id }
+        where: { id },
+        include: { comanda: { select: { id: true } } }
       });
 
       if (!reserva) {
@@ -280,9 +279,9 @@ const reservasController = {
       });
 
       // Cancelar comanda se existir
-      if (reserva.comandaId) {
+      if (reserva.comanda) {
         await prisma.comanda.update({
-          where: { id: reserva.comandaId },
+          where: { id: reserva.comanda.id },
           data: { status: 'CANCELADA' }
         });
       }

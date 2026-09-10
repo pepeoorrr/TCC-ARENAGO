@@ -4,28 +4,28 @@ generator client {
 
 datasource db {
   provider = "mysql"
-  url      = env("DATABASE_URL")
 }
 
 // ==================== USUARIOS ====================
 model Usuario {
-  id            String   @id @default(cuid())
-  nome          String
-  email         String   @unique
-  senha         String
-  telefone      String?
-  cpf           String?  @unique
-  endereco      String?
-  perfil        Perfil   @default(CLIENTE)
-  ativo         Boolean  @default(true)
-  dataCriacao   DateTime @default(now())
+  id              String   @id @default(cuid())
+  nome            String
+  email           String   @unique
+  senha           String
+  telefone        String?
+  cpf             String?  @unique
+  endereco        String?
+  perfil          Perfil   @default(CLIENTE)
+  ativo           Boolean  @default(true)
+  dataCriacao     DateTime @default(now())
   dataAtualizacao DateTime @updatedAt
 
   // Relacionamentos
-  reservas      Reserva[]
-  comandas      Comanda[]
-  bloqueios     Bloqueio[]
-  historicos    Historico[]
+  reservas           Reserva[]
+  reservasCanceladas Reserva[]   @relation("ReservaCanceladaPor")
+  comandas           Comanda[]
+  bloqueios          Bloqueio[]
+  historicos         Historico[]
 
   @@map("usuarios")
 }
@@ -38,23 +38,23 @@ enum Perfil {
 
 // ==================== QUADRAS ====================
 model Quadra {
-  id                    String   @id @default(cuid())
+  id                    String     @id @default(cuid())
   nome                  String
   tipo                  TipoQuadra
   descricao             String?
   tamanho               String?
   capacidade            Int
-  precoHora             Decimal  @db.Decimal(10, 2)
+  precoHora             Decimal    @db.Decimal(10, 2)
   horarioInicio         String
   horarioFim            String
-  durationPadraoMinutos Int     @default(60)
-  ativa                 Boolean  @default(true)
-  dataCriacao           DateTime @default(now())
-  dataAtualizacao       DateTime @updatedAt
+  durationPadraoMinutos Int        @default(60)
+  ativa                 Boolean    @default(true)
+  dataCriacao           DateTime   @default(now())
+  dataAtualizacao       DateTime   @updatedAt
 
   // Relacionamentos
-  reservas              Reserva[]
-  bloqueios             Bloqueio[]
+  reservas  Reserva[]
+  bloqueios Bloqueio[]
 
   @@map("quadras")
 }
@@ -69,31 +69,30 @@ enum TipoQuadra {
 
 // ==================== RESERVAS ====================
 model Reserva {
-  id                    String   @id @default(cuid())
-  numeroReserva         String   @unique
-  usuarioId             String
-  quadraId              String
-  dataReserva           DateTime
-  horarioInicio         String
-  horarioFim            String
-  status                StatusReserva @default(CONFIRMADA)
-  motivoCancelamento    String?
-  canceladaPorId        String?
-  valorAluguel          Decimal  @db.Decimal(10, 2)
-  comandaId             String?  @unique
-  dataCriacao           DateTime @default(now())
-  dataAtualizacao       DateTime @updatedAt
+  id                 String        @id @default(cuid())
+  numeroReserva      String        @unique
+  usuarioId          String
+  quadraId           String
+  dataReserva        DateTime
+  horarioInicio      String
+  horarioFim         String
+  status             StatusReserva @default(CONFIRMADA)
+  motivoCancelamento String?
+  canceladaPorId     String?
+  valorAluguel       Decimal       @db.Decimal(10, 2)
+  dataCriacao        DateTime      @default(now())
+  dataAtualizacao    DateTime      @updatedAt
 
   // Relacionamentos
-  usuario               Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
-  quadra                Quadra   @relation(fields: [quadraId], references: [id], onDelete: Cascade)
-  comanda               Comanda? @relation(fields: [comandaId], references: [id])
-  canceladaPor          Usuario? @relation("ReservaCanceladaPor", fields: [canceladaPorId], references: [id])
+  usuario      Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  quadra       Quadra   @relation(fields: [quadraId], references: [id], onDelete: Cascade)
+  comanda      Comanda?
+  canceladaPor Usuario? @relation("ReservaCanceladaPor", fields: [canceladaPorId], references: [id])
 
-  @@map("reservas")
   @@index([usuarioId])
   @@index([quadraId])
   @@index([status])
+  @@map("reservas")
 }
 
 enum StatusReserva {
@@ -105,31 +104,31 @@ enum StatusReserva {
 
 // ==================== COMANDAS ====================
 model Comanda {
-  id                    String   @id @default(cuid())
-  numeroComanda         String   @unique
-  reservaId             String   @unique
-  usuarioId             String
-  status                StatusComanda @default(ABERTA)
-  subtotalConsumos      Decimal  @default(0) @db.Decimal(10, 2)
-  valorAluguel          Decimal  @db.Decimal(10, 2)
-  total                 Decimal  @db.Decimal(10, 2)
-  formaPagamento        String?
-  valorPago             Decimal? @db.Decimal(10, 2)
-  troco                 Decimal? @db.Decimal(10, 2)
-  observacoes           String?  @db.Text
-  dataFechamento        DateTime?
-  dataPagamento         DateTime?
-  dataCriacao           DateTime @default(now())
-  dataAtualizacao       DateTime @updatedAt
+  id               String        @id @default(cuid())
+  numeroComanda    String        @unique
+  reservaId        String        @unique
+  usuarioId        String
+  status           StatusComanda @default(ABERTA)
+  subtotalConsumos Decimal       @default(0) @db.Decimal(10, 2)
+  valorAluguel     Decimal       @db.Decimal(10, 2)
+  total            Decimal       @db.Decimal(10, 2)
+  formaPagamento   String?
+  valorPago        Decimal?      @db.Decimal(10, 2)
+  troco            Decimal?      @db.Decimal(10, 2)
+  observacoes      String?       @db.Text
+  dataFechamento   DateTime?
+  dataPagamento    DateTime?
+  dataCriacao      DateTime      @default(now())
+  dataAtualizacao  DateTime      @updatedAt
 
   // Relacionamentos
-  reserva               Reserva  @relation(fields: [reservaId], references: [id], onDelete: Cascade)
-  usuario               Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
-  itens                 ItemComanda[]
+  reserva Reserva       @relation(fields: [reservaId], references: [id], onDelete: Cascade)
+  usuario Usuario       @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  itens   ItemComanda[]
 
-  @@map("comandas")
   @@index([usuarioId])
   @@index([status])
+  @@map("comandas")
 }
 
 enum StatusComanda {
@@ -142,76 +141,76 @@ enum StatusComanda {
 
 // ==================== ITENS_COMANDA ====================
 model ItemComanda {
-  id                String   @id @default(cuid())
-  comandaId         String
-  produtoId         String
-  quantidade        Int
-  precoUnitario     Decimal  @db.Decimal(10, 2)
-  subtotal          Decimal  @db.Decimal(10, 2)
-  dataCriacao       DateTime @default(now())
+  id            String   @id @default(cuid())
+  comandaId     String
+  produtoId     String
+  quantidade    Int
+  precoUnitario Decimal  @db.Decimal(10, 2)
+  subtotal      Decimal  @db.Decimal(10, 2)
+  dataCriacao   DateTime @default(now())
 
   // Relacionamentos
-  comanda           Comanda  @relation(fields: [comandaId], references: [id], onDelete: Cascade)
-  produto           Produto  @relation(fields: [produtoId], references: [id], onDelete: Cascade)
+  comanda Comanda @relation(fields: [comandaId], references: [id], onDelete: Cascade)
+  produto Produto @relation(fields: [produtoId], references: [id], onDelete: Cascade)
 
-  @@map("itens_comanda")
   @@index([comandaId])
   @@index([produtoId])
+  @@map("itens_comanda")
 }
 
 // ==================== PRODUTOS ====================
 model Produto {
-  id                String   @id @default(cuid())
-  nome              String
-  descricao         String?  @db.Text
-  categoriaId       String
-  preco             Decimal  @db.Decimal(10, 2)
-  estoqueAtual      Int
-  estoqueMinimo     Int      @default(5)
-  ativo             Boolean  @default(true)
-  dataCriacao       DateTime @default(now())
-  dataAtualizacao   DateTime @updatedAt
+  id              String   @id @default(cuid())
+  nome            String
+  descricao       String?  @db.Text
+  categoriaId     String
+  preco           Decimal  @db.Decimal(10, 2)
+  estoqueAtual    Int
+  estoqueMinimo   Int      @default(5)
+  ativo           Boolean  @default(true)
+  dataCriacao     DateTime @default(now())
+  dataAtualizacao DateTime @updatedAt
 
   // Relacionamentos
-  categoria         Categoria @relation(fields: [categoriaId], references: [id], onDelete: Cascade)
-  itensComanda      ItemComanda[]
+  categoria    Categoria     @relation(fields: [categoriaId], references: [id], onDelete: Cascade)
+  itensComanda ItemComanda[]
 
-  @@map("produtos")
   @@index([categoriaId])
+  @@map("produtos")
 }
 
 // ==================== CATEGORIAS ====================
 model Categoria {
-  id                String   @id @default(cuid())
-  nome              String   @unique
-  descricao         String?  @db.Text
-  ativa             Boolean  @default(true)
-  dataCriacao       DateTime @default(now())
+  id          String   @id @default(cuid())
+  nome        String   @unique
+  descricao   String?  @db.Text
+  ativa       Boolean  @default(true)
+  dataCriacao DateTime @default(now())
 
   // Relacionamentos
-  produtos          Produto[]
+  produtos Produto[]
 
   @@map("categorias")
 }
 
 // ==================== BLOQUEIOS ====================
 model Bloqueio {
-  id                String   @id @default(cuid())
-  quadraId          String
-  dataBloqueio      DateTime
-  horarioInicio     String
-  horarioFim        String
-  motivo            MotivoBloqueio
-  criadoPorId       String
-  dataCriacao       DateTime @default(now())
+  id            String         @id @default(cuid())
+  quadraId      String
+  dataBloqueio  DateTime
+  horarioInicio String
+  horarioFim    String
+  motivo        MotivoBloqueio
+  criadoPorId   String
+  dataCriacao   DateTime       @default(now())
 
   // Relacionamentos
-  quadra            Quadra   @relation(fields: [quadraId], references: [id], onDelete: Cascade)
-  criadoPor         Usuario  @relation(fields: [criadoPorId], references: [id], onDelete: Cascade)
+  quadra    Quadra  @relation(fields: [quadraId], references: [id], onDelete: Cascade)
+  criadoPor Usuario @relation(fields: [criadoPorId], references: [id], onDelete: Cascade)
 
-  @@map("bloqueios")
   @@index([quadraId])
   @@index([dataBloqueio])
+  @@map("bloqueios")
 }
 
 enum MotivoBloqueio {
@@ -223,23 +222,23 @@ enum MotivoBloqueio {
 
 // ==================== HISTORICO ====================
 model Historico {
-  id                String   @id @default(cuid())
-  usuarioId         String
-  tipoAcao          TipoAcao
-  entidade          String
-  entidadeId        String
-  descricao         String   @db.Text
-  dadosAnteriores   String?  @db.LongText
-  dadosNovos        String?  @db.LongText
-  ipAddress         String?
-  dataAcao          DateTime @default(now())
+  id              String   @id @default(cuid())
+  usuarioId       String
+  tipoAcao        TipoAcao
+  entidade        String
+  entidadeId      String
+  descricao       String   @db.Text
+  dadosAnteriores String?  @db.LongText
+  dadosNovos      String?  @db.LongText
+  ipAddress       String?
+  dataAcao        DateTime @default(now())
 
   // Relacionamentos
-  usuario           Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
 
-  @@map("historico")
   @@index([usuarioId])
   @@index([dataAcao])
+  @@map("historico")
 }
 
 enum TipoAcao {
