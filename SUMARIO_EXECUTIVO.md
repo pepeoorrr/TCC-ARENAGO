@@ -92,7 +92,7 @@ cp .env.example .env
 # Editar .env com credenciais MySQL
 npm run prisma:migrate
 npm run dev
-# Abra em: http://localhost:5000
+# Abra em: http://localhost:3000
 ```
 
 ### 2. Frontend

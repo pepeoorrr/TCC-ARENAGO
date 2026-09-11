@@ -1,5 +1,7 @@
 # 📊 Relatório de Análise do Projeto
 
+> Documento histórico. As conclusões abaixo registram uma análise anterior à implementação atual; para a configuração vigente, consulte `README_ARENAGO.md` e `COMANDOS_ESSENCIAIS.md`.
+
 ## 1. 🏗️ Identificação e visão geral
 
 - **Nome do projeto:** ArenaGo
@@ -122,7 +124,7 @@ TCC-ARENAGO/
 ### Estrutura identificada
 
 - `backend/src/server.js` — inicializa Express, aplica `express.json()`, define rotas `/` e `/health`, inicia servidor na porta 3000 e testa conexão com banco.
-- `backend/config/prisma.js` — configura Prisma Client usando adapter MariaDB e variáveis de ambiente.
+- `backend/src/lib/prisma.js` — configura Prisma Client usando adapter MariaDB e `DATABASE_URL`.
 - `backend/prisma/schema.prisma` — define datasource, generator, enums e models.
 - `backend/prisma/migrations/20260603110341_init/migration.sql` — migration SQL inicial.
 
@@ -132,7 +134,7 @@ TCC-ARENAGO/
 - Controllers: **NÃO IDENTIFICADO**.
 - Services: **NÃO IDENTIFICADO**.
 - Middlewares: **parcial**, apenas `express.json()` foi identificado.
-- Configuração do banco: **identificada** em `backend/config/prisma.js` e `backend/prisma.config.ts`.
+- Configuração do banco: **identificada** em `backend/src/lib/prisma.js` e `backend/prisma.config.ts`.
 - Validações: **NÃO IDENTIFICADO**.
 - Tratamento de erros: **parcial**, apenas na conexão inicial e na rota `/health`.
 
@@ -140,7 +142,7 @@ TCC-ARENAGO/
 
 - Servidor Express com rota raiz informativa — Evidência: `backend/src/server.js`.
 - Health check com consulta simples ao banco via Prisma — Evidência: `backend/src/server.js`.
-- Configuração do Prisma Client com adapter MariaDB — Evidência: `backend/config/prisma.js`.
+- Configuração do Prisma Client com adapter MariaDB — Evidência: `backend/src/lib/prisma.js`.
 
 ### Fluxo das requisições
 
@@ -154,7 +156,7 @@ O fluxo existe apenas para verificação de saúde da API. Não foram identifica
 
 - **Tipo de banco:** MySQL/MariaDB
 - **ORM:** Prisma
-- **Configuração principal:** `backend/config/prisma.js` e `backend/prisma.config.ts`
+- **Configuração principal:** `backend/src/lib/prisma.js` e `backend/prisma.config.ts`
 - **Schema Prisma:** `backend/prisma/schema.prisma`
 - **Migrations:** Sim
 - **Localização das migrations:** `backend/prisma/migrations`
@@ -176,7 +178,7 @@ O fluxo existe apenas para verificação de saúde da API. Não foram identifica
 | Chaves primárias | Atende | `backend/prisma/schema.prisma` — todos os models possuem `@id` |
 | Chaves estrangeiras e relações | Atende | `backend/prisma/schema.prisma` e `backend/prisma/migrations/20260603110341_init/migration.sql` |
 | Campos coerentes com o domínio | Atende | `backend/prisma/schema.prisma` — usuários, quadras, reservas, comandas e produtos |
-| Prisma Client utilizado no backend | Atende | `backend/config/prisma.js` e `backend/src/server.js` |
+| Prisma Client utilizado no backend | Atende | `backend/src/lib/prisma.js` e controllers em `backend/src/controllers` |
 | Operação real de banco em rota/controller | Parcial | `backend/src/server.js` — apenas health check com consulta simples, sem operação de domínio |
 
 ### Operações Prisma encontradas
@@ -433,7 +435,7 @@ Não foi transformado automaticamente em nota zero aquilo que depende exclusivam
 ### 14.4 Backend com Prisma ORM — máximo 2,0
 
 - **Situação:** Parcial
-- **Evidências:** `backend/src/server.js`, `backend/config/prisma.js`, `backend/package.json`
+- **Evidências:** `backend/src/server.js`, `backend/src/lib/prisma.js`, `backend/package.json`
 - **Servidor Node.js/Express:** iniciado e configurado.
 - **Prisma configurado:** sim, com adapter MariaDB e variáveis de ambiente.
 - **Operação no banco:** apenas consulta simples de health check.

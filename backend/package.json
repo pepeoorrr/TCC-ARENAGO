@@ -10,8 +10,7 @@
     "start": "node src/server.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "prisma:migrate": "npx prisma migrate dev",
-    "prisma:generate": "npx prisma generate",
-    "prisma:seed": "node prisma/seed.js"
+    "prisma:generate": "npx prisma generate"
   },
   "dependencies": {
     "@prisma/adapter-mariadb": "^7.8.0",

@@ -133,22 +133,23 @@ const Cadastro = () => {
         email: formData.email.toLowerCase().trim(),
         telefone: formData.telefone.replace(/[^\d]/g, ''),
         cpf: formData.cpf.replace(/[^\d]/g, ''),
-        senha: formData.senha
+        senha: formData.senha,
+        confirmarSenha: formData.confirmarSenha
       });
 
-      if (response.data.success) {
+      if (response.data.usuario && response.data.token) {
         setSucesso('Conta criada com sucesso! Redirecionando...');
         setTimeout(() => {
           login(response.data.usuario, response.data.token);
           navigate('/dashboard');
         }, 1500);
       } else {
-        setErro(response.data.mensagem || 'Erro ao criar conta');
+        setErro(response.data.erro || response.data.mensagem || 'Erro ao criar conta');
       }
     } catch (error) {
       const mensagemErro = 
+        error.response?.data?.erro ||
         error.response?.data?.mensagem ||
-        error.response?.data?.error ||
         'Erro ao criar conta. Tente novamente.';
       setErro(mensagemErro);
     } finally {

@@ -25,7 +25,7 @@ npm run prisma:migrate
 npm run dev
 ```
 
-✅ Backend rodando em: **http://localhost:5000**
+✅ Backend rodando em: **http://localhost:3000**
 
 ---
 
@@ -117,11 +117,11 @@ net start MySQL80
 - Faça login novamente
 ```
 
-### Erro: "Cannot GET /api/..."
+### Erro: "Cannot GET /..."
 ```
 ❌ Problema: Backend não está rodando
 ✅ Solução: Verifique se está em npm run dev na pasta backend
-- Verifique porta 5000 em uso: netstat -ano | findstr :5000 (Windows)
+- Verifique porta 3000 em uso: netstat -ano | findstr :3000 (Windows)
 - Altere PORT em .env se necessário
 ```
 
@@ -164,9 +164,9 @@ http://192.168.1.100:5173
 npm run dev
 
 # Você verá:
-# ✓ Server rodando em http://localhost:5000
-# GET /api/usuarios/perfil 200
-# POST /api/reservas 201
+# ✓ Server rodando em http://localhost:3000
+# GET /usuarios/perfil 200
+# POST /reservas 201
 # etc...
 ```
 
@@ -242,7 +242,7 @@ UPDATE Usuario SET ativo = true WHERE id = 1;
 A: Delete a pasta `backend/prisma/migrations` e execute `npm run prisma:migrate` novamente
 
 **P: Como adiciono novos usuários?**
-A: Use o endpoint POST /api/usuarios (como admin) ou crie conta via frontend
+A: Use o endpoint POST /usuarios (como admin) ou crie conta via frontend
 
 **P: Como mudo a porta do servidor?**
 A: Edite `PORT` em `backend/.env` e reinicie

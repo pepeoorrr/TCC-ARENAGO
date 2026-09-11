@@ -14,7 +14,7 @@ npm run dev
 
 **Resultado esperado:**
 ```
-✓ Server rodando em http://localhost:5000
+✓ Server rodando em http://localhost:3000
 ```
 
 ### Terminal 2: Frontend
@@ -69,7 +69,7 @@ npm run dev
 mysql -u root -p arenago
 
 # Altere perfil
-UPDATE Usuario SET perfil = 'ADMIN' WHERE email = 'seu@email.com';
+UPDATE usuarios SET perfil = 'ADMIN' WHERE email = 'seu@email.com';
 EXIT;
 ```
 
@@ -99,30 +99,30 @@ mysql -u root -p arenago
 ### Queries Úteis
 ```sql
 -- Ver todos usuários
-SELECT id, nome, email, perfil, ativo FROM Usuario;
+SELECT id, nome, email, perfil, ativo FROM usuarios;
 
 -- Mudar perfil de usuário
-UPDATE Usuario SET perfil = 'ADMIN' WHERE email = 'seu@email.com';
+UPDATE usuarios SET perfil = 'ADMIN' WHERE email = 'seu@email.com';
 
 -- Criar quadra de teste
-INSERT INTO Quadra (nome, tipo, precoHora, horarioInicio, horarioFim, durationPadraoMinutos, ativa) 
+INSERT INTO quadras (nome, tipo, precoHora, horarioInicio, horarioFim, durationPadraoMinutos, ativa)
 VALUES ('Quadra 1', 'FUTSAL', 100.00, '08:00', '22:00', 60, true);
 
 -- Ver quadras
-SELECT * FROM Quadra;
+SELECT * FROM quadras;
 
 -- Ver reservas
 SELECT r.id, r.numeroReserva, r.dataReserva, r.horarioInicio, r.status 
-FROM Reserva r 
-JOIN Usuario u ON r.usuarioId = u.id;
+FROM reservas r
+JOIN usuarios u ON r.usuarioId = u.id;
 
 -- Ver comandas
 SELECT c.id, c.numeroComanda, c.status, c.total 
-FROM Comanda c;
+FROM comandas c;
 
 -- Limpar dados de teste
-DELETE FROM Usuario WHERE email LIKE '%teste%';
-DELETE FROM Quadra;
+DELETE FROM usuarios WHERE email LIKE '%teste%';
+DELETE FROM quadras;
 ```
 
 ---
@@ -199,7 +199,7 @@ npm run prisma:migrate
 ### Porta já em Uso
 ```bash
 # Verificar porta em uso (Windows)
-netstat -ano | findstr :5000
+netstat -ano | findstr :3000
 
 # Matar processo
 taskkill /PID <PID> /F
@@ -247,7 +247,7 @@ npm uninstall nome-do-pacote
 ### Backend (.env)
 ```env
 NODE_ENV=development
-PORT=5000
+PORT=3000
 DATABASE_URL="mysql://user:password@localhost:3306/arenago"
 JWT_SECRET="sua_chave_secreta_super_segura_123456"
 FRONTEND_URL="http://localhost:5173"
@@ -255,7 +255,7 @@ FRONTEND_URL="http://localhost:5173"
 
 ### Frontend (.env)
 ```env
-VITE_API_URL=http://localhost:5000/api
+VITE_API_URL=http://localhost:3000
 VITE_APP_NAME=ArenaGo
 VITE_APP_VERSION=1.0.0
 ```
@@ -378,7 +378,7 @@ Frontend recarrega automaticamente ao salvar (Hot Module Reload).
 
 ## ✅ VERIFICAÇÃO ANTES DE COMEÇAR A DESENVOLVER
 
-- [x] Backend rodando em http://localhost:5000 ✓
+- [x] Backend rodando em http://localhost:3000 ✓
 - [x] Frontend rodando em http://localhost:5173 ✓
 - [x] Banco de dados criado e migrations executadas ✓
 - [x] Consegue cadastrar usuário ✓

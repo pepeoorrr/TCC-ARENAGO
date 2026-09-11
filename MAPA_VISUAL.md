@@ -22,7 +22,7 @@
                           ↓
 ┌─────────────────────────────────────────────────────────────┐
 │              SERVIDOR BACKEND (Node.js)                      │
-│  http://localhost:5000 (Express.js)                         │
+│  http://localhost:3000 (Express.js)                         │
 │                                                              │
 │  ┌──────────────────────────────────────────────────────┐  │
 │  │ Middlewares: CORS, bodyParser, Auth, Permissions   │  │
@@ -79,7 +79,7 @@
 │ 1. CADASTRO                                                  │
 ├─────────────────────────────────────────────────────────────┤
 │                                                              │
-│ Frontend: POST /api/auth/registro                           │
+│ Frontend: POST /auth/registro                               │
 │ ├─ nome, email, telefone, cpf, senha                       │
 │ └─ Validações no frontend:                                 │
 │    ├─ Email válido                                         │
@@ -108,7 +108,7 @@
 │ 2. LOGIN                                                     │
 ├─────────────────────────────────────────────────────────────┤
 │                                                              │
-│ Frontend: POST /api/auth/login                             │
+│ Frontend: POST /auth/login                                 │
 │ ├─ email, senha                                            │
 │ └─ Validações no frontend                                 │
 │                                                              │
@@ -180,7 +180,7 @@
 │ 1. CLIENTE SELECIONA QUADRA                                │
 ├─────────────────────────────────────────────────────────────┤
 │                                                              │
-│ Frontend: GET /api/quadras                                 │
+│ Frontend: GET /quadras                                     │
 │ Backend: quadrasController.listar()                        │
 │ └─ Retorna list de quadras ativas                         │
 │                                                              │
@@ -193,7 +193,7 @@
 │ 2. CLIENTE ESCOLHE DATA/HORA (EM DESENVOLVIMENTO)         │
 ├─────────────────────────────────────────────────────────────┤
 │                                                              │
-│ Frontend: GET /api/disponibilidade?quadraId=X&...        │
+│ Frontend: GET /disponibilidade?quadraId=X&...            │
 │ Backend: disponibilidadeController.obter()                │
 │ ├─ Gera grid de horários                                 │
 │ ├─ Marca como ocupado se tiver reserva                  │
@@ -212,7 +212,7 @@
 │ Frontend: Mostra resumo (quadra, data, hora, preço)       │
 │ └─ User clica "Confirmar"                                │
 │                                                              │
-│ Frontend: POST /api/reservas                              │
+│ Frontend: POST /reservas                                  │
 │ ├─ quadraId, dataReserva, horarioInicio, duracao        │
 │ └─ Envia com token JWT                                  │
 │                                                              │
@@ -261,22 +261,22 @@
 │                                                              │
 │ Funcionário pode:                                          │
 │ ├─ Adicionar itens (produtos) à comanda                  │
-│ │  ├─ POST /api/comandas/:id/items                     │
+│ │  ├─ POST /comandas/:id/items                         │
 │ │  ├─ Valida se tem estoque                            │
 │ │  ├─ Decrementa estoque do produto                    │
 │ │  └─ Recalcula total da comanda                       │
 │ │                                                      │
 │ ├─ Remover itens                                        │
-│ │  ├─ DELETE /api/comandas/:id/items/:itemId          │
+│ │  ├─ DELETE /comandas/:id/items/:itemId              │
 │ │  ├─ Devolve estoque                                 │
 │ │  └─ Recalcula total                                │
 │ │                                                      │
 │ ├─ Fechar comanda                                       │
-│ │  ├─ PUT /api/comandas/:id/fechar                   │
+│ │  ├─ PUT /comandas/:id/fechar                       │
 │ │  └─ status: AGUARDANDO_PAGAMENTO                   │
 │ │                                                      │
 │ └─ Registrar pagamento                                 │
-│    ├─ PUT /api/comandas/:id/pagamento                │
+│    ├─ PUT /comandas/:id/pagamento                    │
 │    ├─ status: PAGA                                   │
 │    └─ Atualiza Reserva status: FINALIZADA            │
 │                                                              │
@@ -287,14 +287,14 @@
 ├─────────────────────────────────────────────────────────────┤
 │                                                              │
 │ Cliente:                                                   │
-│ ├─ DELETE /api/reservas/:id                             │
+│ ├─ DELETE /reservas/:id                                 │
 │ ├─ Validação: 2 horas antes da reserva                 │
 │ └─ Se válido:                                           │
 │    ├─ Reserva status: CANCELADA                        │
 │    └─ Comanda status: CANCELADA                        │
 │                                                              │
 │ Admin:                                                     │
-│ ├─ DELETE /api/reservas/:id                             │
+│ ├─ DELETE /reservas/:id                                 │
 │ ├─ Sem restrição de tempo                              │
 │ ├─ Registra motivo                                      │
 │ └─ Cancela Reserva e Comanda                           │

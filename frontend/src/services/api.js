@@ -35,7 +35,7 @@ api.interceptors.response.use(
 
 export const authAPI = {
   registro: (dados) => api.post('/auth/registro', dados),
-  login: (email, senha) => api.post('/auth/login', { email, senha }),
+  login: (dados) => api.post('/auth/login', dados),
   recuperarSenha: (email) => api.post('/auth/recuperar-senha', { email }),
   redefinirSenha: (token, novaSenha) => api.post('/auth/redefinir-senha', { token, novaSenha })
 };

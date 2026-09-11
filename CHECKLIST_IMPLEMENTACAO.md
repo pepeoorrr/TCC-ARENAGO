@@ -344,9 +344,9 @@ npm run prisma:migrate
 npm run dev
 
 # Testes manuais com curl/Postman
-curl -X POST http://localhost:5000/api/auth/registro \
+curl -X POST http://localhost:3000/auth/registro \
   -H "Content-Type: application/json" \
-  -d '{"nome":"Teste","email":"teste@teste.com","telefone":"11987654321","cpf":"12345678901","senha":"123456"}'
+  -d '{"nome":"Teste","email":"teste@teste.com","telefone":"11987654321","cpf":"12345678901","senha":"123456","confirmarSenha":"123456"}'
 ```
 
 ### 2. Validar Frontend

@@ -30,10 +30,10 @@ const Perfil = () => {
     try {
       const response = await usuariosAPI.obterPerfil();
       setFormData({
-        nome: response.data.dados.nome || '',
-        email: response.data.dados.email || '',
-        telefone: response.data.dados.telefone || '',
-        cpf: response.data.dados.cpf || ''
+        nome: response.data.nome || '',
+        email: response.data.email || '',
+        telefone: response.data.telefone || '',
+        cpf: response.data.cpf || ''
       });
     } catch (error) {
       setErro('Erro ao carregar perfil');
@@ -98,23 +98,23 @@ const Perfil = () => {
         telefone: formData.telefone.replace(/[^\d]/g, '')
       });
 
-      if (response.data.success) {
+      if (response.data.usuario) {
         setSucesso('Perfil atualizado com sucesso!');
         addToast('Perfil atualizado com sucesso!', 'success');
         setModo('visualizar');
         // Atualizar dados locais
         setFormData(prev => ({
           ...prev,
-          nome: response.data.dados.nome,
-          telefone: response.data.dados.telefone
+          nome: response.data.usuario.nome,
+          telefone: response.data.usuario.telefone
         }));
       } else {
-        setErro(response.data.mensagem || 'Erro ao atualizar perfil');
+        setErro(response.data.erro || response.data.mensagem || 'Erro ao atualizar perfil');
       }
     } catch (error) {
       const mensagemErro = 
+        error.response?.data?.erro ||
         error.response?.data?.mensagem ||
-        error.response?.data?.error ||
         'Erro ao atualizar perfil. Tente novamente.';
       setErro(mensagemErro);
       addToast(mensagemErro, 'error');

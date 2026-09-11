@@ -57,19 +57,19 @@ const Login = () => {
         senha
       });
 
-      if (response.data.success) {
+      if (response.data.usuario && response.data.token) {
         login(response.data.usuario, response.data.token);
         setSucesso('Login realizado com sucesso!');
         setTimeout(() => {
           navigate('/dashboard');
         }, 1000);
       } else {
-        setErro(response.data.mensagem || 'Erro ao fazer login');
+        setErro(response.data.erro || response.data.mensagem || 'Erro ao fazer login');
       }
     } catch (error) {
       const mensagemErro = 
+        error.response?.data?.erro ||
         error.response?.data?.mensagem ||
-        error.response?.data?.error ||
         'Erro ao conectar com o servidor. Verifique suas credenciais.';
       setErro(mensagemErro);
     } finally {

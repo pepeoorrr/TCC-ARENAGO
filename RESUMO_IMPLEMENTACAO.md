@@ -91,66 +91,66 @@ Context (AuthContext, ToastContext)
 ## 📊 API Endpoints Implementados
 
 ### Autenticação (4 endpoints)
-- POST /api/auth/registro
-- POST /api/auth/login
-- POST /api/auth/recuperar-senha (placeholder)
-- POST /api/auth/redefinir-senha (placeholder)
+- POST /auth/registro
+- POST /auth/login
+- POST /auth/recuperar-senha (placeholder)
+- POST /auth/redefinir-senha (placeholder)
 
 ### Usuários (7 endpoints)
-- GET /api/usuarios/perfil
-- PUT /api/usuarios/perfil
-- GET /api/usuarios (admin)
-- GET /api/usuarios/:id (admin)
-- POST /api/usuarios (admin)
-- PUT /api/usuarios/:id (admin)
-- DELETE /api/usuarios/:id (admin)
+- GET /usuarios/perfil
+- PUT /usuarios/perfil
+- GET /usuarios (admin)
+- GET /usuarios/:id (admin)
+- POST /usuarios (admin)
+- PUT /usuarios/:id (admin)
+- DELETE /usuarios/:id (admin)
 
 ### Quadras (5 endpoints)
-- GET /api/quadras
-- GET /api/quadras/:id
-- POST /api/quadras (admin)
-- PUT /api/quadras/:id (admin)
-- DELETE /api/quadras/:id (admin)
+- GET /quadras
+- GET /quadras/:id
+- POST /quadras (admin)
+- PUT /quadras/:id (admin)
+- DELETE /quadras/:id (admin)
 
 ### Reservas (5 endpoints)
-- GET /api/reservas
-- GET /api/reservas/:id
-- POST /api/reservas
-- PUT /api/reservas/:id
-- DELETE /api/reservas/:id (cancelar)
+- GET /reservas
+- GET /reservas/:id
+- POST /reservas
+- PUT /reservas/:id
+- DELETE /reservas/:id (cancelar)
 
 ### Comandas (8 endpoints)
-- GET /api/comandas
-- GET /api/comandas/:id
-- POST /api/comandas/:id/items (adicionar)
-- DELETE /api/comandas/:id/items/:itemId (remover)
-- PUT /api/comandas/:id/fechar
-- PUT /api/comandas/:id/pagamento
-- DELETE /api/comandas/:id (cancelar)
+- GET /comandas
+- GET /comandas/:id
+- POST /comandas/:id/items (adicionar)
+- DELETE /comandas/:id/items/:itemId (remover)
+- PUT /comandas/:id/fechar
+- PUT /comandas/:id/pagamento
+- DELETE /comandas/:id (cancelar)
 
 ### Produtos (5 endpoints)
-- GET /api/produtos
-- GET /api/produtos/:id
-- POST /api/produtos (admin)
-- PUT /api/produtos/:id (admin)
-- DELETE /api/produtos/:id (admin)
+- GET /produtos
+- GET /produtos/:id
+- POST /produtos (admin)
+- PUT /produtos/:id (admin)
+- DELETE /produtos/:id (admin)
 
 ### Categorias (4 endpoints)
-- GET /api/categorias
-- POST /api/categorias (admin)
-- PUT /api/categorias/:id (admin)
-- DELETE /api/categorias/:id (admin)
+- GET /categorias
+- POST /categorias (admin)
+- PUT /categorias/:id (admin)
+- DELETE /categorias/:id (admin)
 
 ### Bloqueios (3 endpoints)
-- GET /api/bloqueios
-- POST /api/bloqueios (admin/func)
-- DELETE /api/bloqueios/:id (admin)
+- GET /bloqueios
+- POST /bloqueios (admin/func)
+- DELETE /bloqueios/:id (admin)
 
 ### Disponibilidade (1 endpoint)
-- GET /api/disponibilidade?quadraId=X&dataInicio=Y&dataFim=Z
+- GET /disponibilidade?quadraId=X&dataInicio=Y&dataFim=Z
 
 ### Dashboard (1 endpoint)
-- GET /api/dashboard (admin)
+- GET /dashboard (admin)
 
 ---
 

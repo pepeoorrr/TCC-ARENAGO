@@ -71,7 +71,7 @@ cp .env.example .env
 ```env
 DATABASE_URL="mysql://user:password@localhost:3306/arenago"
 JWT_SECRET="sua_chave_secreta_aqui"
-PORT=5000
+PORT=3000
 FRONTEND_URL="http://localhost:5173"
 ```
 
@@ -85,7 +85,7 @@ npm run prisma:migrate
 npm run dev
 ```
 
-O servidor estará disponível em `http://localhost:5000`
+O servidor estará disponível em `http://localhost:3000`
 
 ### Frontend
 
@@ -106,7 +106,7 @@ cp .env.example .env
 
 4. Configure a URL da API em `.env`:
 ```env
-VITE_API_URL="http://localhost:5000/api"
+VITE_API_URL="http://localhost:3000"
 ```
 
 5. Inicie o servidor de desenvolvimento:
