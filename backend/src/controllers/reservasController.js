@@ -2,6 +2,19 @@ const prisma = require('../lib/prisma');
 
 const { gerarNumeroReserva } = require('../utils/gerador');
 
+const minutosDoHorario = (horario) => {
+  const [hora, minuto] = horario.split(':').map(Number);
+  return hora * 60 + minuto;
+};
+
+const horarioDoMinutos = (minutos) => {
+  const hora = Math.floor(minutos / 60);
+  const minuto = minutos % 60;
+  return `${String(hora).padStart(2, '0')}:${String(minuto).padStart(2, '0')}`;
+};
+
+const dataSemHorario = (data) => new Date(`${data}T00:00:00`);
+
 const reservasController = {
   async listar(req, res, next) {
     try {
@@ -77,8 +90,13 @@ const reservasController = {
       const { quadraId, data, horarioInicio, duracao } = req.body;
       const { id: usuarioLogado } = req.usuario;
 
-      if (!quadraId || !data || !horarioInicio || !duracao) {
+      const duracaoMinutos = Number(duracao);
+      if (!quadraId || !data || !horarioInicio || !Number.isInteger(duracaoMinutos) || duracaoMinutos <= 0) {
         return res.status(400).json({ erro: 'Quadra, data, horário e duração são obrigatórios' });
+      }
+
+      if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(horarioInicio)) {
+        return res.status(400).json({ erro: 'Horário de início inválido' });
       }
 
       // Buscar quadra
@@ -91,35 +109,30 @@ const reservasController = {
       }
 
       // Calcular horário fim
-      const [horaInicio, minutoInicio] = horarioInicio.split(':');
-      const dataReserva = new Date(data);
+      const dataReserva = dataSemHorario(data);
+      if (Number.isNaN(dataReserva.getTime())) {
+        return res.status(400).json({ erro: 'Data inválida' });
+      }
       const inicio = new Date(dataReserva);
-      inicio.setHours(parseInt(horaInicio), parseInt(minutoInicio), 0, 0);
+      inicio.setHours(...horarioInicio.split(':').map(Number), 0, 0);
+      const inicioMinutos = minutosDoHorario(horarioInicio);
+      const fimMinutos = inicioMinutos + duracaoMinutos;
+      const horarioFim = horarioDoMinutos(fimMinutos);
 
-      const fim = new Date(inicio.getTime() + duracao * 60000);
-      const horarioFim = `${fim.getHours().toString().padStart(2, '0')}:${fim.getMinutes().toString().padStart(2, '0')}`;
+      if (inicioMinutos < minutosDoHorario(quadra.horarioInicio) || fimMinutos > minutosDoHorario(quadra.horarioFim)) {
+        return res.status(400).json({ erro: 'Horário fora do funcionamento da quadra' });
+      }
+
+      const diaSeguinte = new Date(dataReserva);
+      diaSeguinte.setDate(diaSeguinte.getDate() + 1);
 
       // Verificar sobreposição de reservas
       const reservaSobreposicao = await prisma.reserva.findFirst({
         where: {
           quadraId,
-          dataReserva: {
-            equals: dataReserva
-          },
-          OR: [
-            {
-              AND: [
-                { horarioInicio: { lte: horarioInicio } },
-                { horarioFim: { gt: horarioInicio } }
-              ]
-            },
-            {
-              AND: [
-                { horarioInicio: { lt: horarioFim } },
-                { horarioFim: { gte: horarioFim } }
-              ]
-            }
-          ],
+          dataReserva: { gte: dataReserva, lt: diaSeguinte },
+          horarioInicio: { lt: horarioFim },
+          horarioFim: { gt: horarioInicio },
           status: { in: ['CONFIRMADA', 'ATIVA'] }
         }
       });
@@ -132,15 +145,9 @@ const reservasController = {
       const bloqueio = await prisma.bloqueio.findFirst({
         where: {
           quadraId,
-          dataBloqueio: dataReserva,
-          OR: [
-            {
-              AND: [
-                { horarioInicio: { lte: horarioInicio } },
-                { horarioFim: { gt: horarioInicio } }
-              ]
-            }
-          ]
+          dataBloqueio: { gte: dataReserva, lt: diaSeguinte },
+          horarioInicio: { lt: horarioFim },
+          horarioFim: { gt: horarioInicio }
         }
       });
 
@@ -166,7 +173,7 @@ const reservasController = {
 
       // Gerar comanda automaticamente
       const numeroComanda = `CMD-${new Date().toISOString().split('T')[0].replace(/-/g, '')}-${Math.random().toString().slice(2, 6)}`;
-      const comanda = await prisma.comanda.create({
+      await prisma.comanda.create({
         data: {
           numeroComanda,
           reservaId: reserva.id,
@@ -217,13 +224,27 @@ const reservasController = {
         return res.status(400).json({ erro: 'Apenas reservas confirmadas podem ser alteradas' });
       }
 
-      // TODO: Validar nova data/horário
+      const novaData = data ? dataSemHorario(data) : new Date(reserva.dataReserva);
+      const novoHorarioInicio = horarioInicio || reserva.horarioInicio;
+      const duracaoMinutos = duracao
+        ? Number(duracao)
+        : minutosDoHorario(reserva.horarioFim) - minutosDoHorario(reserva.horarioInicio);
+
+      if (Number.isNaN(novaData.getTime()) || !Number.isInteger(duracaoMinutos) || duracaoMinutos <= 0 || !/^([01]\d|2[0-3]):[0-5]\d$/.test(novoHorarioInicio)) {
+        return res.status(400).json({ erro: 'Data, horário ou duração inválidos' });
+      }
+
+      const novoHorarioFim = horarioDoMinutos(minutosDoHorario(novoHorarioInicio) + duracaoMinutos);
+      if (minutosDoHorario(novoHorarioInicio) < minutosDoHorario(reserva.quadra.horarioInicio) || minutosDoHorario(novoHorarioFim) > minutosDoHorario(reserva.quadra.horarioFim)) {
+        return res.status(400).json({ erro: 'Horário fora do funcionamento da quadra' });
+      }
 
       const reservaAtualizada = await prisma.reserva.update({
         where: { id },
         data: {
-          dataReserva: data ? new Date(data) : undefined,
-          horarioInicio: horarioInicio || undefined
+          dataReserva: novaData,
+          horarioInicio: novoHorarioInicio,
+          horarioFim: novoHorarioFim
         },
         include: { usuario: true, quadra: true }
       });
@@ -260,6 +281,7 @@ const reservasController = {
 
         // Verificar antecedência de 2 horas
         const dataReserva = new Date(reserva.dataReserva);
+        dataReserva.setHours(...reserva.horarioInicio.split(':').map(Number), 0, 0);
         const agora = new Date();
         const diferencaHoras = (dataReserva - agora) / (1000 * 60 * 60);
 

@@ -141,14 +141,6 @@ const Login = () => {
 
           {/* Links */}
           <div className="mt-6 space-y-3 text-center">
-            <div>
-              <Link
-                to="/recuperar-senha"
-                className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-              >
-                Esqueceu sua senha?
-              </Link>
-            </div>
             <div className="border-t pt-3">
               <p className="text-gray-600 text-sm mb-2">Não tem uma conta?</p>
               <Link

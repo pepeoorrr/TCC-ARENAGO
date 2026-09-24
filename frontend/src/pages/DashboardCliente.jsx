@@ -18,7 +18,7 @@ const DashboardCliente = () => {
   const carregarReservas = async () => {
     try {
       const response = await reservasAPI.listar();
-      setReservas(response.data.dados || []);
+      setReservas(Array.isArray(response.data) ? response.data : response.data.dados || []);
     } catch (error) {
       setErro('Erro ao carregar reservas');
       console.error(error);
@@ -133,7 +133,7 @@ const DashboardCliente = () => {
                           {formatarData(reserva.dataReserva)} às {formatarHora(reserva.horarioInicio)}
                         </p>
                         <p className="text-sm text-gray-600">
-                          Duração: {reserva.duracao} minutos
+                          Duração: {reserva.duracao || 60} minutos
                         </p>
                       </div>
                       <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusBadge(reserva.status)}`}>

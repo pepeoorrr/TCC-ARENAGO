@@ -11,10 +11,10 @@ import DashboardCliente from './pages/DashboardCliente';
 import DashboardAdmin from './pages/DashboardAdmin';
 import NovaReserva from './pages/NovaReserva';
 import Perfil from './pages/Perfil';
+import Operacao from './pages/Operacao';
 import './App.css';
 
-// Placeholder pages (será criadas posteriormente)
-const DashboardFuncionario = () => <div className="p-8"><h1>Dashboard Funcionário - Em desenvolvimento</h1></div>;
+const DashboardFuncionario = () => <Operacao />;
 const NaoAutorizado = () => (
   <div className="min-h-screen flex items-center justify-center">
     <div className="text-center">
@@ -121,7 +121,7 @@ export default function App() {
             path="/reserva/:id"
             element={
               <PrivateRoute permissoes={['CLIENTE']}>
-                <div className="p-8"><h1>Detalhes Reserva - Em desenvolvimento</h1></div>
+                <Operacao />
               </PrivateRoute>
             }
           />
@@ -141,7 +141,7 @@ export default function App() {
             path="/gerenciamento/quadras"
             element={
               <PrivateRoute permissoes={['ADMIN']}>
-                <div className="p-8"><h1>Gerenciamento de Quadras - Em desenvolvimento</h1></div>
+                <Operacao />
               </PrivateRoute>
             }
           />
@@ -149,7 +149,7 @@ export default function App() {
             path="/gerenciamento/produtos"
             element={
               <PrivateRoute permissoes={['ADMIN']}>
-                <div className="p-8"><h1>Gerenciamento de Produtos - Em desenvolvimento</h1></div>
+                <Operacao />
               </PrivateRoute>
             }
           />
@@ -157,7 +157,7 @@ export default function App() {
             path="/gerenciamento/usuarios"
             element={
               <PrivateRoute permissoes={['ADMIN']}>
-                <div className="p-8"><h1>Gerenciamento de Usuários - Em desenvolvimento</h1></div>
+                <Operacao />
               </PrivateRoute>
             }
           />
@@ -167,7 +167,7 @@ export default function App() {
             path="/agenda"
             element={
               <PrivateRoute permissoes={['FUNCIONARIO', 'ADMIN']}>
-                <div className="p-8"><h1>Agenda do Dia - Em desenvolvimento</h1></div>
+                <Operacao />
               </PrivateRoute>
             }
           />
@@ -175,7 +175,7 @@ export default function App() {
             path="/comanda/:id"
             element={
               <PrivateRoute permissoes={['FUNCIONARIO', 'ADMIN']}>
-                <div className="p-8"><h1>Detalhes Comanda - Em desenvolvimento</h1></div>
+                <Operacao />
               </PrivateRoute>
             }
           />

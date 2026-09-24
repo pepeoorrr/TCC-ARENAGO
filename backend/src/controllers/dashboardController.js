@@ -1,12 +1,19 @@
 const prisma = require('../lib/prisma');
 
+const calcularDuracao = (inicio, fim) => {
+  const [horaInicio, minutoInicio] = inicio.split(':').map(Number);
+  const [horaFim, minutoFim] = fim.split(':').map(Number);
+  return (horaFim * 60 + minutoFim) - (horaInicio * 60 + minutoInicio);
+};
+
 const dashboardController = {
   async obterDados(req, res, next) {
     try {
       const hoje = new Date();
       hoje.setHours(0, 0, 0, 0);
 
-      const dataFimMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
+      const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+      const inicioProximoMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1);
 
       // 1. Receita do dia
       const comandasDia = await prisma.comanda.findMany({
@@ -26,7 +33,7 @@ const dashboardController = {
         where: {
           dataPagamento: {
             gte: new Date(hoje.getFullYear(), hoje.getMonth(), 1),
-            lte: dataFimMes
+            lt: inicioProximoMes
           },
           status: 'PAGA'
         }
@@ -37,7 +44,10 @@ const dashboardController = {
       // 3. Reservas do dia
       const reservasHoje = await prisma.reserva.count({
         where: {
-          dataReserva: hoje,
+          dataReserva: {
+            gte: hoje,
+            lt: new Date(hoje.getTime() + 24 * 60 * 60 * 1000)
+          },
           status: { in: ['CONFIRMADA', 'ATIVA'] }
         }
       });
@@ -55,12 +65,15 @@ const dashboardController = {
       const taxaOcupacao = totalQuadras > 0 ? Math.round((reservasHoje / totalQuadras) * 100) : 0;
 
       // 6. Produtos com baixo estoque
-      const produtosBaixoEstoque = await prisma.produto.count({
+      const produtosEstoque = await prisma.produto.findMany({
         where: {
-          ativo: true,
-          estoqueAtual: { lte: prisma.produto.fields.estoqueMinimo }
-        }
+          ativo: true
+        },
+        select: { estoqueAtual: true, estoqueMinimo: true }
       });
+      const produtosBaixoEstoque = produtosEstoque.filter(
+        produto => produto.estoqueAtual <= produto.estoqueMinimo
+      ).length;
 
       // 7. Próximas reservas (10 próximas)
       const proximasReservas = await prisma.reserva.findMany({
@@ -88,8 +101,8 @@ const dashboardController = {
         where: {
           comanda: {
             dataPagamento: {
-              gte: new Date(hoje.getFullYear(), hoje.getMonth(), 1),
-              lte: dataFimMes
+              gte: inicioMes,
+              lt: inicioProximoMes
             }
           }
         },
@@ -101,7 +114,8 @@ const dashboardController = {
       const produtos = await prisma.produto.findMany({
         where: {
           id: { in: produtosMaisVendidos.map(p => p.produtoId) }
-        }
+        },
+        include: { categoria: { select: { nome: true } } }
       });
 
       const produtosMaisVendidosDetalhes = produtosMaisVendidos.map(pv => {
@@ -109,6 +123,7 @@ const dashboardController = {
         return {
           produtoId: pv.produtoId,
           nome: produto?.nome,
+          categoria: produto?.categoria?.nome,
           quantidade: pv._sum.quantidade,
           receita: (pv._sum.quantidade || 0) * parseFloat(produto?.preco || 0)
         };
@@ -126,8 +141,9 @@ const dashboardController = {
           numeroReserva: r.numeroReserva,
           cliente: r.usuario.nome,
           quadra: r.quadra.nome,
-          data: r.dataReserva,
-          horario: r.horarioInicio
+          dataReserva: r.dataReserva,
+          horarioInicio: r.horarioInicio,
+          duracao: calcularDuracao(r.horarioInicio, r.horarioFim)
         })),
         produtosMaisVendidos: produtosMaisVendidosDetalhes
       });

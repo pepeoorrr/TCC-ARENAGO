@@ -1,16 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { quadrasAPI } from '../services/api';
+import { quadrasAPI, reservasAPI } from '../services/api';
 import { Button, Card, Alert, Loading, Input } from '../components/UI';
 
 const NovaReserva = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { logout } = useAuth();
   const [quadras, setQuadras] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState('');
   const [filtro, setFiltro] = useState('');
+  const [dataReserva, setDataReserva] = useState('');
+  const [horarioInicio, setHorarioInicio] = useState('');
+  const [duracao, setDuracao] = useState(60);
+  const [salvando, setSalvando] = useState(false);
+  const quadraSelecionada = searchParams.get('quadraId');
 
   useEffect(() => {
     carregarQuadras();
@@ -19,7 +25,7 @@ const NovaReserva = () => {
   const carregarQuadras = async () => {
     try {
       const response = await quadrasAPI.listar();
-      setQuadras(response.data.dados || []);
+      setQuadras(Array.isArray(response.data) ? response.data : response.data.dados || []);
     } catch (error) {
       setErro('Erro ao carregar quadras');
       console.error(error);
@@ -50,6 +56,26 @@ const NovaReserva = () => {
      q.tipo?.toLowerCase().includes(filtro.toLowerCase()))
   );
 
+  const criarReserva = async (e) => {
+    e.preventDefault();
+    setErro('');
+    setSalvando(true);
+
+    try {
+      await reservasAPI.criar({
+        quadraId: quadraSelecionada,
+        data: dataReserva,
+        horarioInicio,
+        duracao: Number(duracao)
+      });
+      navigate('/dashboard/cliente');
+    } catch (error) {
+      setErro(error.response?.data?.erro || 'Erro ao criar reserva');
+    } finally {
+      setSalvando(false);
+    }
+  };
+
   if (carregando) return <Loading />;
 
   return (
@@ -75,6 +101,20 @@ const NovaReserva = () => {
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
         {erro && <Alert type="error" message={erro} onClose={() => setErro('')} />}
+
+        {quadraSelecionada && (
+          <Card className="mb-8">
+            <h2 className="text-xl font-semibold mb-4">Detalhes da reserva</h2>
+            <form onSubmit={criarReserva} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+              <Input label="Data" type="date" value={dataReserva} onChange={(e) => setDataReserva(e.target.value)} required />
+              <Input label="Horário" type="time" value={horarioInicio} onChange={(e) => setHorarioInicio(e.target.value)} required />
+              <Input label="Duração (minutos)" type="number" min="30" step="30" value={duracao} onChange={(e) => setDuracao(e.target.value)} required />
+              <Button type="submit" variant="primary" disabled={salvando} className="md:col-span-3">
+                {salvando ? 'Agendando...' : 'Confirmar reserva'}
+              </Button>
+            </form>
+          </Card>
+        )}
 
         {/* Filtro */}
         <Card className="mb-8">
@@ -125,7 +165,7 @@ const NovaReserva = () => {
                   variant="primary"
                   size="lg"
                   className="w-full"
-                  onClick={() => navigate(`/reserva/nova?quadraId=${quadra.id}`)}
+                  onClick={() => navigate(`/nova-reserva?quadraId=${quadra.id}`)}
                 >
                   Selecionar Quadra
                 </Button>

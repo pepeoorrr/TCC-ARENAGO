@@ -18,7 +18,7 @@ const DashboardAdmin = () => {
   const carregarDados = async () => {
     try {
       const response = await dashboardAPI.obter();
-      setDados(response.data.dados);
+      setDados(response.data.dados || response.data);
     } catch (error) {
       setErro('Erro ao carregar dados do dashboard');
       console.error(error);
@@ -164,8 +164,8 @@ const DashboardAdmin = () => {
             <p className="text-gray-500 text-center py-4">Nenhuma reserva próxima</p>
           ) : (
             <div className="space-y-3">
-              {dados?.proximasReservas?.map((reserva, idx) => (
-                <div key={idx} className="flex justify-between items-center border rounded-lg p-3 hover:bg-gray-50">
+              {dados?.proximasReservas?.map((reserva) => (
+                <div key={reserva.numeroReserva} className="flex justify-between items-center border rounded-lg p-3 hover:bg-gray-50">
                   <div>
                     <p className="font-semibold text-gray-800">
                       {reserva.cliente} - {reserva.quadra}
@@ -198,11 +198,11 @@ const DashboardAdmin = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {dados?.produtosMaisVendidos?.map((produto, idx) => (
-                    <tr key={idx} className="border-b hover:bg-gray-50">
+                  {dados?.produtosMaisVendidos?.map((produto) => (
+                    <tr key={produto.produtoId} className="border-b hover:bg-gray-50">
                       <td className="px-4 py-2 font-medium">{produto.nome}</td>
-                      <td className="px-4 py-2">{produto.categoria}</td>
-                      <td className="px-4 py-2 text-right">{produto.quantidadeVendida}</td>
+                      <td className="px-4 py-2">{produto.categoria || '-'}</td>
+                      <td className="px-4 py-2 text-right">{produto.quantidade}</td>
                       <td className="px-4 py-2 text-right text-green-600 font-medium">
                         {formatarMoeda(produto.receita)}
                       </td>
