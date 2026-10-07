@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 export const Button = ({ 
   children, 
@@ -50,6 +50,9 @@ export const Input = ({
   className = '',
   ...props
 }) => {
+  const [senhaVisivel, setSenhaVisivel] = useState(false);
+  const ehSenha = type === 'password';
+
   return (
     <div className="mb-4">
       {label && (
@@ -57,17 +60,40 @@ export const Input = ({
           {label} {required && <span className="text-red-600">*</span>}
         </label>
       )}
-      <input
-        type={type}
-        value={value}
-        onChange={onChange}
-        placeholder={placeholder}
-        disabled={disabled}
-        className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 ${
-          error ? 'border-red-600' : 'border-gray-300'
-        } ${className}`}
-        {...props}
-      />
+      <div className="relative">
+        <input
+          type={ehSenha && senhaVisivel ? 'text' : type}
+          value={value}
+          onChange={onChange}
+          placeholder={placeholder}
+          disabled={disabled}
+          className={`w-full px-4 py-2 ${ehSenha ? 'pr-12' : ''} border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 ${
+            error ? 'border-red-600' : 'border-gray-300'
+          } ${className}`}
+          {...props}
+        />
+        {ehSenha && (
+          <button
+            type="button"
+            onClick={() => setSenhaVisivel(visivel => !visivel)}
+            disabled={disabled}
+            aria-label={senhaVisivel ? 'Ocultar senha' : 'Mostrar senha'}
+            aria-pressed={senhaVisivel}
+            className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 hover:text-gray-700 disabled:cursor-not-allowed"
+          >
+            {senhaVisivel ? (
+              <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-5 h-5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 3l18 18M10.6 10.6a2 2 0 002.8 2.8M9.9 5.2A10.8 10.8 0 0112 5c5 0 8.3 4.5 9 7-.2.8-.8 1.9-1.8 3M6.2 6.2C3.9 7.7 2.4 10 2 12c.7 2.5 4 7 10 7 1.2 0 2.3-.2 3.3-.6" />
+              </svg>
+            ) : (
+              <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="w-5 h-5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z" />
+                <circle cx="12" cy="12" r="3" />
+              </svg>
+            )}
+          </button>
+        )}
+      </div>
       {error && <p className="text-red-600 text-sm mt-1">{error}</p>}
     </div>
   );

@@ -96,10 +96,9 @@ const DashboardCliente = () => {
               <p className="mb-4">Gerencie suas reservas de quadras esportivas</p>
             </div>
             <Button
-              variant="primary"
+              variant="success"
               size="lg"
               onClick={() => navigate('/nova-reserva')}
-              className="bg-white text-blue-600 hover:bg-gray-100"
             >
               + Nova Reserva
             </Button>
