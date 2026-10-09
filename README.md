@@ -2,6 +2,8 @@
 
 Aplicação React moderna para gerenciamento e agendamento de quadras esportivas de areia com dashboard administrativo completo.
 
+**Estrutura atual:** [perfis, estabelecimentos, comandas individuais e execução dos testes](IMPLEMENTACAO_PERFIS.md). Esse guia descreve o backend e frontend atuais, a migração e o cadastro do primeiro administrador.
+
 ## Tecnologias Utilizadas
 
 - **React** - Biblioteca JavaScript para interfaces de usuário

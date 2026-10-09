@@ -1,190 +1,49 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 import PrivateRoute from './components/PrivateRoute';
-
-// Pages
+import Workspace from './components/Workspace';
 import Login from './pages/Login';
 import Cadastro from './pages/Cadastro';
-import DashboardCliente from './pages/DashboardCliente';
-import DashboardAdmin from './pages/DashboardAdmin';
-import NovaReserva from './pages/NovaReserva';
 import Perfil from './pages/Perfil';
-import Operacao from './pages/Operacao';
+import Management from './pages/Management';
+import Booking from './pages/Booking';
+import { ReservationList, ReservationDetail } from './pages/Reservations';
+import { BillList, BillDetail } from './pages/Bills';
+import ManagerDashboard from './pages/ManagerDashboard';
+import Blocks from './pages/Blocks';
 import './App.css';
-
-const DashboardFuncionario = () => <Operacao />;
-const NaoAutorizado = () => (
-  <div className="min-h-screen flex items-center justify-center">
-    <div className="text-center">
-      <h1 className="text-4xl font-bold text-gray-800 mb-4">403</h1>
-      <p className="text-gray-600 mb-4">Você não tem permissão para acessar este recurso</p>
-      <a href="/dashboard" className="text-blue-600 hover:text-blue-800">Voltar ao Dashboard</a>
-    </div>
-  </div>
-);
-const NotFound = () => (
-  <div className="min-h-screen flex items-center justify-center">
-    <div className="text-center">
-      <h1 className="text-4xl font-bold text-gray-800 mb-4">404</h1>
-      <p className="text-gray-600 mb-4">Página não encontrada</p>
-      <a href="/" className="text-blue-600 hover:text-blue-800">Ir para Home</a>
-    </div>
-  </div>
-);
-
-// Componente para redirecionar para o dashboard correto baseado no perfil
-const RedireccionarDashboard = () => {
-  const { usuario, estaAutenticado } = useAuth();
-
-  if (!estaAutenticado()) {
-    return <Navigate to="/login" replace />;
-  }
-
-  const perfil = usuario?.perfil;
-
-  switch (perfil) {
-    case 'ADMIN':
-      return <Navigate to="/dashboard/admin" replace />;
-    case 'FUNCIONARIO':
-      return <Navigate to="/dashboard/funcionario" replace />;
-    case 'CLIENTE':
-    default:
-      return <Navigate to="/dashboard/cliente" replace />;
-  }
-};
-
-// Rota Home
-const Home = () => {
-  const { estaAutenticado } = useAuth();
-
-  if (estaAutenticado()) {
-    return <RedireccionarDashboard />;
-  }
-
-  return <Navigate to="/login" replace />;
-};
-
+const managers = ['ADMIN', 'PROPRIETARIO'];
+export function DashboardRedirect() {
+  const { usuario, loading } = useAuth();
+  if (loading) return <p>Carregando...</p>;
+  return <Navigate replace to={!usuario ? '/login' : `/dashboard/${usuario.perfil === 'ADMIN' ? 'admin' : usuario.perfil === 'PROPRIETARIO' ? 'proprietario' : 'cliente'}`} />;
+}
+export function AppRoutes() {
+  return <Routes>
+    <Route path="/login" element={<Login />} />
+    <Route path="/cadastro" element={<Cadastro />} />
+    <Route path="/" element={<DashboardRedirect />} />
+    <Route path="/dashboard" element={<DashboardRedirect />} />
+    <Route path="/nao-autorizado" element={<p className="p-8">Você não tem permissão para acessar esta página. <a href="/dashboard">Voltar</a></p>} />
+    <Route element={<PrivateRoute><Workspace /></PrivateRoute>}>
+      <Route path="/dashboard/cliente" element={<PrivateRoute permissoes={['CLIENTE']}><ReservationList /></PrivateRoute>} />
+      <Route path="/dashboard/admin" element={<PrivateRoute permissoes={['ADMIN']}><ManagerDashboard /></PrivateRoute>} />
+      <Route path="/dashboard/proprietario" element={<PrivateRoute permissoes={managers}><ManagerDashboard /></PrivateRoute>} />
+      <Route path="/dashboard/funcionario" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/nova-reserva" element={<Booking />} />
+      <Route path="/reserva/:id" element={<ReservationDetail />} />
+      <Route path="/comandas" element={<BillList />} />
+      <Route path="/comanda/:id" element={<BillDetail />} />
+      <Route path="/perfil" element={<Perfil />} />
+      <Route path="/agenda" element={<PrivateRoute permissoes={managers}><ReservationList /></PrivateRoute>} />
+      <Route path="/bloqueios" element={<PrivateRoute permissoes={managers}><Blocks /></PrivateRoute>} />
+      <Route path="/gerenciamento/:recurso" element={<PrivateRoute permissoes={managers}><Management /></PrivateRoute>} />
+    </Route>
+    <Route path="*" element={<p className="p-8">Página não encontrada. <a href="/dashboard">Voltar</a></p>} />
+  </Routes>;
+}
 export default function App() {
-  return (
-    <Router>
-      <AuthProvider>
-        <ToastProvider>
-          <Routes>
-          {/* Rotas Públicas */}
-          <Route path="/" element={<Home />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/cadastro" element={<Cadastro />} />
-          <Route path="/nao-autorizado" element={<NaoAutorizado />} />
-
-          {/* Rotas Privadas - Dashboards */}
-          <Route
-            path="/dashboard"
-            element={<RedireccionarDashboard />}
-          />
-          <Route
-            path="/dashboard/cliente"
-            element={
-              <PrivateRoute permissoes={['CLIENTE']}>
-                <DashboardCliente />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/dashboard/admin"
-            element={
-              <PrivateRoute permissoes={['ADMIN']}>
-                <DashboardAdmin />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/dashboard/funcionario"
-            element={
-              <PrivateRoute permissoes={['FUNCIONARIO', 'ADMIN']}>
-                <DashboardFuncionario />
-              </PrivateRoute>
-            }
-          />
-
-          {/* Rotas Privadas - Reservas (será desenvolvidas) */}
-          <Route
-            path="/nova-reserva"
-            element={
-              <PrivateRoute permissoes={['CLIENTE']}>
-                <NovaReserva />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/reserva/:id"
-            element={
-              <PrivateRoute permissoes={['CLIENTE']}>
-                <Operacao />
-              </PrivateRoute>
-            }
-          />
-
-          {/* Rotas Privadas - Perfil (será desenvolvidas) */}
-          <Route
-            path="/perfil"
-            element={
-              <PrivateRoute>
-                <Perfil />
-              </PrivateRoute>
-            }
-          />
-
-          {/* Rotas Privadas - Gerenciamento (será desenvolvidas) */}
-          <Route
-            path="/gerenciamento/quadras"
-            element={
-              <PrivateRoute permissoes={['ADMIN']}>
-                <Operacao />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/gerenciamento/produtos"
-            element={
-              <PrivateRoute permissoes={['ADMIN']}>
-                <Operacao />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/gerenciamento/usuarios"
-            element={
-              <PrivateRoute permissoes={['ADMIN']}>
-                <Operacao />
-              </PrivateRoute>
-            }
-          />
-
-          {/* Rotas Privadas - Agenda Funcionário (será desenvolvidas) */}
-          <Route
-            path="/agenda"
-            element={
-              <PrivateRoute permissoes={['FUNCIONARIO', 'ADMIN']}>
-                <Operacao />
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/comanda/:id"
-            element={
-              <PrivateRoute permissoes={['FUNCIONARIO', 'ADMIN']}>
-                <Operacao />
-              </PrivateRoute>
-            }
-          />
-
-          {/* 404 */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-        </ToastProvider>
-      </AuthProvider>
-    </Router>
-  );
+  return <BrowserRouter><AuthProvider><ToastProvider><AppRoutes /></ToastProvider></AuthProvider></BrowserRouter>;
 }

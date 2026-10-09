@@ -102,7 +102,7 @@ export const produtosAPI = {
 // ==================== CATEGORIAS ====================
 
 export const categoriasAPI = {
-  listar: () => api.get('/categorias'),
+  listar: (params) => api.get('/categorias', { params }),
   criar: (dados) => api.post('/categorias', dados),
   atualizar: (id, dados) => api.put(`/categorias/${id}`, dados),
   deletar: (id) => api.delete(`/categorias/${id}`)
@@ -111,7 +111,7 @@ export const categoriasAPI = {
 // ==================== DASHBOARD ====================
 
 export const dashboardAPI = {
-  obter: () => api.get('/dashboard')
+  obter: (params) => api.get('/dashboard', { params })
 };
 
 // ==================== BLOQUEIOS ====================
@@ -123,3 +123,13 @@ export const bloqueiosAPI = {
 };
 
 export default api;
+
+export const estabelecimentosAPI = {
+  listar: () => api.get('/estabelecimentos'),
+  criar: dados => api.post('/estabelecimentos', dados),
+  atualizar: (id, dados) => api.put(`/estabelecimentos/${id}`, dados),
+  deletar: id => api.delete(`/estabelecimentos/${id}`)
+};
+usuariosAPI.buscarCliente = email => api.get('/usuarios/buscar-cliente', { params: { email } });
+comandasAPI.criar = (reservaId, usuarioId) => api.post(`/comandas/${reservaId}`, { usuarioId });
+comandasAPI.cancelar = id => api.delete(`/comandas/${id}`);

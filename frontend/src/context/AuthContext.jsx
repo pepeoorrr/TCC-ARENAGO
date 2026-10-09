@@ -1,4 +1,5 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
+import { usuariosAPI } from '../services/api';
 
 const AuthContext = createContext();
 
@@ -10,13 +11,14 @@ export const AuthProvider = ({ children }) => {
   // Carregar dados do localStorage
   useEffect(() => {
     const token = localStorage.getItem('token');
-    const usuario = localStorage.getItem('usuario');
-    
-    if (token && usuario) {
-      setToken(token);
-      setUsuario(JSON.parse(usuario));
-    }
-    setLoading(false);
+    let active = true;
+    if (!token) { setLoading(false); return; }
+    usuariosAPI.obterPerfil().then(({ data }) => {
+      if (active) { setToken(token); setUsuario(data); localStorage.setItem('usuario', JSON.stringify(data)); }
+    }).catch(() => {
+      if (active) { localStorage.removeItem('token'); localStorage.removeItem('usuario'); }
+    }).finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
   }, []);
 
   const login = (usuario, token) => {

@@ -4,7 +4,6 @@ generator client {
 
 datasource db {
   provider = "mysql"
-  url      = env("DATABASE_URL")
 }
 
 // ==================== USUARIOS ====================
@@ -27,14 +26,34 @@ model Usuario {
   comandas           Comanda[]
   bloqueios          Bloqueio[]
   historicos         Historico[]
+  estabelecimentos   Estabelecimento[]
 
   @@map("usuarios")
 }
 
 enum Perfil {
   CLIENTE
-  FUNCIONARIO
+  PROPRIETARIO
   ADMIN
+}
+
+model Estabelecimento {
+  id              String @id @default(cuid())
+  nome            String
+  endereco        String
+  contato         String
+  ativo           Boolean @default(true)
+  proprietarioId  String
+  dataCriacao     DateTime @default(now())
+  dataAtualizacao DateTime @updatedAt
+  proprietario    Usuario @relation(fields: [proprietarioId], references: [id], onDelete: Restrict)
+  quadras         Quadra[]
+  produtos        Produto[]
+  categorias      Categoria[]
+  historicos      Historico[]
+
+  @@index([proprietarioId])
+  @@map("estabelecimentos")
 }
 
 // ==================== QUADRAS ====================
@@ -52,12 +71,15 @@ model Quadra {
   ativa                 Boolean    @default(true)
   dataCriacao           DateTime   @default(now())
   dataAtualizacao       DateTime   @updatedAt
+  estabelecimentoId     String
+  estabelecimento       Estabelecimento @relation(fields: [estabelecimentoId], references: [id], onDelete: Restrict)
 
   // Relacionamentos
   reservas  Reserva[]
   bloqueios Bloqueio[]
 
   @@map("quadras")
+  @@index([estabelecimentoId])
 }
 
 enum TipoQuadra {
@@ -87,7 +109,7 @@ model Reserva {
   // Relacionamentos
   usuario      Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
   quadra       Quadra   @relation(fields: [quadraId], references: [id], onDelete: Cascade)
-  comanda      Comanda?
+  comandas     Comanda[]
   canceladaPor Usuario? @relation("ReservaCanceladaPor", fields: [canceladaPorId], references: [id])
 
   @@index([usuarioId])
@@ -107,7 +129,7 @@ enum StatusReserva {
 model Comanda {
   id               String        @id @default(cuid())
   numeroComanda    String        @unique
-  reservaId        String        @unique
+  reservaId        String
   usuarioId        String
   status           StatusComanda @default(ABERTA)
   subtotalConsumos Decimal       @default(0) @db.Decimal(10, 2)
@@ -129,6 +151,7 @@ model Comanda {
 
   @@index([usuarioId])
   @@index([status])
+  @@unique([reservaId, usuarioId])
   @@map("comandas")
 }
 
@@ -171,27 +194,33 @@ model Produto {
   ativo           Boolean  @default(true)
   dataCriacao     DateTime @default(now())
   dataAtualizacao DateTime @updatedAt
+  estabelecimentoId String
+  estabelecimento Estabelecimento @relation(fields: [estabelecimentoId], references: [id], onDelete: Restrict)
 
   // Relacionamentos
   categoria    Categoria     @relation(fields: [categoriaId], references: [id], onDelete: Cascade)
   itensComanda ItemComanda[]
 
   @@index([categoriaId])
+  @@index([estabelecimentoId])
   @@map("produtos")
 }
 
 // ==================== CATEGORIAS ====================
 model Categoria {
   id          String   @id @default(cuid())
-  nome        String   @unique
+  nome        String
   descricao   String?  @db.Text
   ativa       Boolean  @default(true)
   dataCriacao DateTime @default(now())
+  estabelecimentoId String
+  estabelecimento Estabelecimento @relation(fields: [estabelecimentoId], references: [id], onDelete: Restrict)
 
   // Relacionamentos
   produtos Produto[]
 
   @@map("categorias")
+  @@unique([estabelecimentoId, nome])
 }
 
 // ==================== BLOQUEIOS ====================
@@ -233,6 +262,8 @@ model Historico {
   dadosNovos      String?  @db.LongText
   ipAddress       String?
   dataAcao        DateTime @default(now())
+  estabelecimentoId String?
+  estabelecimento Estabelecimento? @relation(fields: [estabelecimentoId], references: [id], onDelete: Restrict)
 
   // Relacionamentos
   usuario Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
