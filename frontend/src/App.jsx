@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, Link } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 import PrivateRoute from './components/PrivateRoute';
@@ -26,7 +26,7 @@ export function AppRoutes() {
     <Route path="/cadastro" element={<Cadastro />} />
     <Route path="/" element={<DashboardRedirect />} />
     <Route path="/dashboard" element={<DashboardRedirect />} />
-    <Route path="/nao-autorizado" element={<p className="p-8">Você não tem permissão para acessar esta página. <a href="/dashboard">Voltar</a></p>} />
+    <Route path="/nao-autorizado" element={<p className="p-8">Você não tem permissão para acessar esta página. <Link to="/dashboard">Voltar</Link></p>} />
     <Route element={<PrivateRoute><Workspace /></PrivateRoute>}>
       <Route path="/dashboard/cliente" element={<PrivateRoute permissoes={['CLIENTE']}><ReservationList /></PrivateRoute>} />
       <Route path="/dashboard/admin" element={<PrivateRoute permissoes={['ADMIN']}><ManagerDashboard /></PrivateRoute>} />
@@ -41,9 +41,9 @@ export function AppRoutes() {
       <Route path="/bloqueios" element={<PrivateRoute permissoes={managers}><Blocks /></PrivateRoute>} />
       <Route path="/gerenciamento/:recurso" element={<PrivateRoute permissoes={managers}><Management /></PrivateRoute>} />
     </Route>
-    <Route path="*" element={<p className="p-8">Página não encontrada. <a href="/dashboard">Voltar</a></p>} />
+    <Route path="*" element={<p className="p-8">Página não encontrada. <Link to="/dashboard">Voltar</Link></p>} />
   </Routes>;
 }
 export default function App() {
-  return <BrowserRouter><AuthProvider><ToastProvider><AppRoutes /></ToastProvider></AuthProvider></BrowserRouter>;
+  return <BrowserRouter basename={import.meta.env.BASE_URL}><AuthProvider><ToastProvider><AppRoutes /></ToastProvider></AuthProvider></BrowserRouter>;
 }

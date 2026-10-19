@@ -10,7 +10,14 @@ const { ensure } = require('./services/errors');
 function createApp({ db, secret, now, identifier }) {
   ensure(secret && secret.length >= 16, 'JWT_SECRET deve conter pelo menos 16 caracteres', 500);
   const app = express();
-  app.use(cors({ origin: process.env.FRONTEND_URL || 'http://localhost:5173', credentials: true }));
+  let frontendUrl = process.env.FRONTEND_URL;
+  if (!frontendUrl && process.env.NODE_ENV === 'production') throw new Error('FRONTEND_URL é obrigatória em produção.');
+  frontendUrl ||= 'http://localhost:5173';
+  const frontend = new URL(frontendUrl);
+  ensure(['http:', 'https:'].includes(frontend.protocol) && !frontend.username && !frontend.password && !frontend.search && !frontend.hash, 'FRONTEND_URL inválida', 500);
+  ensure(process.env.NODE_ENV !== 'production' || frontend.protocol === 'https:', 'FRONTEND_URL deve usar HTTPS em produção', 500);
+  // CORS compara origens (protocolo, domínio e porta), nunca subpastas.
+  app.use(cors({ origin: frontend.origin, credentials: true }));
   app.use(express.json({ limit: '1mb' }));
   const accounts = createAccounts(db, secret);
   const catalog = createCatalog(db), establishments = createEstablishments(db);
