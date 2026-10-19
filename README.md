@@ -32,6 +32,22 @@ TCC-ARENAGO/
 
 ## Instalação
 
+### Seed do administrador
+
+Com as dependências do backend instaladas e as migrações aplicadas, configure
+`DATABASE_URL`, `ADMIN_EMAIL`, `ADMIN_PASSWORD` (mínimo de 8 caracteres) e,
+opcionalmente, `ADMIN_NAME` no arquivo `backend/.env`, conforme `.env.example`.
+
+```bash
+cd backend
+npm run prisma:seed
+```
+
+O seed `backend/prisma/seed.js` cria um usuário ativo com perfil `ADMIN` e senha
+criptografada com bcrypt. Se já existir um administrador, encerra sem alterações.
+Se o email pertencer a outro usuário, informa o conflito sem alterar seu perfil.
+Remova as credenciais de bootstrap do `.env` após executar o seed.
+
 1. **Instalar dependências:**
 ```bash
 npm install
