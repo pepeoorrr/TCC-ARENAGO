@@ -162,17 +162,19 @@ const Cadastro = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-600 to-green-800 flex items-center justify-center px-4 py-8">
-      <div className="w-full max-w-md">
-        <Card className="shadow-2xl">
+    <div className="auth-page">
+      <Link to="/" className="auth-home-link">← Voltar para o início</Link>
+      <div className="auth-card-wrap">
+        <Card className="auth-card">
           {/* Header */}
           <div className="text-center mb-8">
             <div className="inline-block bg-green-600 text-white rounded-full w-16 h-16 flex items-center justify-center mb-4">
               <span className="text-2xl font-bold">AG</span>
             </div>
             <h1 className="text-3xl font-bold text-gray-800">ArenaGo</h1>
-            <p className="text-gray-600 text-sm">Criar Nova Conta</p>
+            <p className="text-gray-600 text-sm">Seu próximo jogo começa aqui.</p>
           </div>
+          <p className="auth-subline">Crie sua conta grátis para consultar horários e organizar suas reservas.</p>
 
           {/* Alerts */}
           {erro && <Alert type="error" message={erro} onClose={() => setErro('')} />}
@@ -273,6 +275,7 @@ const Cadastro = () => {
               Voltar ao Login
             </Link>
           </div>
+          <p className="auth-footnote">Ao continuar, seus dados serão usados para criar e gerenciar sua conta ArenaGo.</p>
         </Card>
       </div>
     </div>

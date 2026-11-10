@@ -13,6 +13,7 @@ import { ReservationList, ReservationDetail } from './pages/Reservations';
 import { BillList, BillDetail } from './pages/Bills';
 import ManagerDashboard from './pages/ManagerDashboard';
 import Blocks from './pages/Blocks';
+import Home from './pages/Home';
 import './App.css';
 const managers = ['ADMIN', 'PROPRIETARIO'];
 export function DashboardRedirect() {
@@ -24,7 +25,7 @@ export function AppRoutes() {
   return <Routes>
     <Route path="/login" element={<Login />} />
     <Route path="/cadastro" element={<Cadastro />} />
-    <Route path="/" element={<DashboardRedirect />} />
+    <Route path="/" element={<Home />} />
     <Route path="/dashboard" element={<DashboardRedirect />} />
     <Route path="/nao-autorizado" element={<p className="p-8">Você não tem permissão para acessar esta página. <Link to="/dashboard">Voltar</Link></p>} />
     <Route element={<PrivateRoute><Workspace /></PrivateRoute>}>

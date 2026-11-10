@@ -82,17 +82,19 @@ const Login = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-600 to-blue-800 flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
-        <Card className="shadow-2xl">
+    <div className="auth-page">
+      <Link to="/" className="auth-home-link">← Voltar para o início</Link>
+      <div className="auth-card-wrap">
+        <Card className="auth-card">
           {/* Header */}
           <div className="text-center mb-8">
             <div className="inline-block bg-blue-600 text-white rounded-full w-16 h-16 flex items-center justify-center mb-4">
               <span className="text-2xl font-bold">AG</span>
             </div>
             <h1 className="text-3xl font-bold text-gray-800">ArenaGo</h1>
-            <p className="text-gray-600 text-sm">Gerenciamento de Quadras Esportivas</p>
+            <p className="text-gray-600 text-sm">Bom jogo começa com uma boa reserva.</p>
           </div>
+          <p className="auth-subline">Entre na sua conta para organizar sua próxima partida.</p>
 
           {/* Alerts */}
           {erro && <Alert type="error" message={erro} onClose={() => setErro('')} />}
@@ -153,11 +155,7 @@ const Login = () => {
           </div>
 
           {/* Demo Info */}
-          <div className="mt-6 p-3 bg-blue-50 rounded border border-blue-200">
-            <p className="text-xs text-gray-600">
-              <strong>Demo:</strong> Use qualquer email e senha para testar
-            </p>
-          </div>
+          <p className="auth-footnote">A plataforma usa sua conta para consultar reservas e horários disponíveis.</p>
         </Card>
       </div>
     </div>
