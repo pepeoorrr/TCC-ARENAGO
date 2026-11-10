@@ -15,6 +15,13 @@ test('raiz e health são públicos, inclusive com token inválido', async () => 
   }
 });
 
+test('catálogo público lista quadras sem exigir autenticação', async () => {
+  const db = { estabelecimento: { findMany: async () => [] } };
+  const app = createApp({ db, secret });
+  const response = await request(app).get('/public/quadras').expect(200);
+  assert.deepEqual(response.body, []);
+});
+
 test('rotas inexistentes e métodos não registrados retornam 404 sem exigir token', async () => {
   const app = createApp({ db: {}, secret });
   for (const path of ['/inexistente', '/auth/inexistente', '/usuarios/u/inexistente', '/auth/login']) {
@@ -41,7 +48,7 @@ test('recursos protegidos continuam exigindo autenticação', async () => {
     assert.equal(response.status, 401, path);
     assert.equal(response.body.erro, 'Token não fornecido');
   }
-  for (const [method, path] of [['post', '/reservas'], ['put', '/usuarios/u'], ['delete', '/comandas/c']]) {
+  for (const [method, path] of [['post', '/reservas'], ['post', '/usuarios/alterar-senha'], ['put', '/usuarios/u'], ['delete', '/comandas/c']]) {
     assert.equal((await request(app)[method](path).send({})).status, 401);
   }
   const invalid = await request(app).get('/usuarios/perfil').set('Authorization', 'Bearer invalid');

@@ -11,6 +11,7 @@ const configs = {
   produtos: { title: 'Produtos e estoque', api: produtosAPI, fields: [['nome', 'Nome'], ['categoriaId', 'Categoria'], ['preco', 'Preço', 'number'], ['estoqueAtual', 'Estoque atual', 'number'], ['estoqueMinimo', 'Estoque mínimo', 'number']] },
   usuarios: { title: 'Usuários', api: usuariosAPI, fields: [['nome', 'Nome'], ['email', 'Email', 'email'], ['senha', 'Senha inicial', 'password'], ['perfil', 'Perfil']] }
 };
+const modalityLabels = { BEACH_TENNIS: 'Beach Tennis', FUTEVOLEI: 'Futevôlei', FUTSAL: 'Futsal', VOLEI: 'Vôlei de areia', BASQUETE: 'Basquete', TENIS: 'Tênis', OUTRO: 'Outro' };
 export default function Management() {
   const { recurso } = useParams(), config = configs[recurso];
   const { usuario } = useAuth(), { localId, params, reload: reloadLocais } = useLocal();
@@ -31,8 +32,9 @@ export default function Management() {
   }, [recurso, localId, allowed]);
   if (!allowed) return <p role="alert">Acesso não permitido.</p>;
   const perLocal = ['quadras', 'categorias', 'produtos'].includes(recurso);
+  const canChangeStatus = recurso !== 'estabelecimentos' || usuario.perfil === 'ADMIN';
   const options = key => {
-    if (key === 'tipo') return ['FUTSAL', 'VOLEI', 'BASQUETE', 'TENIS', 'OUTRO'].map(value => ({ value, label: value }));
+    if (key === 'tipo') return [['BEACH_TENNIS', 'Beach Tennis'], ['FUTEVOLEI', 'Futevôlei'], ['VOLEI', 'Vôlei de areia'], ['FUTSAL', 'Futsal'], ['BASQUETE', 'Basquete'], ['TENIS', 'Tênis'], ['OUTRO', 'Outro']].map(([value, label]) => ({ value, label }));
     if (key === 'perfil') return ['ADMIN', 'PROPRIETARIO', 'CLIENTE'].map(value => ({ value, label: value === 'PROPRIETARIO' ? 'Proprietário' : value }));
     if (key === 'categoriaId') return choices.filter(c => c.ativa && c.estabelecimentoId === (form?.estabelecimentoId || localId)).map(c => ({ value: c.id, label: c.nome }));
     if (key === 'proprietarioId') return choices.filter(c => c.ativo).map(c => ({ value: c.id, label: c.nome }));
@@ -54,6 +56,19 @@ export default function Management() {
       if (recurso === 'estabelecimentos') await reloadLocais();
     } catch (e) { if (generation.current === requestGeneration) setError(errorMessage(e)); } finally { if (generation.current === requestGeneration) setBusy(false); }
   };
+  const toggleStatus = async row => {
+    const activeKey = recurso === 'quadras' || recurso === 'categorias' ? 'ativa' : 'ativo';
+    const next = !row[activeKey];
+    const verb = next ? 'reativar' : 'desativar';
+    if (!window.confirm(`Deseja ${verb} “${row.nome}”?`)) return;
+    setBusy(true); setError(''); setMessage('');
+    try {
+      await config.api.atualizar(row.id, { [activeKey]: next });
+      setRows(current => current.map(item => item.id === row.id ? { ...item, [activeKey]: next } : item));
+      setMessage(`${row.nome} ${next ? 'reativado' : 'desativado'} com sucesso.`);
+    } catch (e) { setError(errorMessage(e)); }
+    finally { setBusy(false); }
+  };
   return <section className="space-y-4"><h1 className="text-2xl font-bold">{config.title}</h1>
     {error && <p role="alert" className="text-red-700">{error}</p>}{message && <p role="status" className="text-green-800">{message}</p>}
     {loading ? <p>Carregando...</p> : <>
@@ -66,7 +81,7 @@ export default function Management() {
         <div className="flex gap-3"><button disabled={busy} className="bg-blue-700 text-white p-2 rounded">{busy ? 'Salvando...' : 'Salvar'}</button><button disabled={busy} type="button" onClick={() => setForm(null)}>Cancelar</button></div>
       </form>}
       <div className="overflow-x-auto bg-white rounded"><table className="w-full text-left"><thead><tr><th className="p-3">Nome</th><th>Informações</th><th>Situação</th><th>Ações</th></tr></thead>
-        <tbody>{rows.map(row => <tr key={row.id} className="border-t"><td className="p-3">{row.nome}</td><td>{row.email || row.endereco || (row.preco !== undefined ? `${currency(row.preco)} · Estoque: ${row.estoqueAtual}` : row.tipo || row.descricao)}</td><td>{(row.ativo ?? row.ativa) ? 'Ativo' : 'Inativo'}</td><td><button disabled={busy} className="text-blue-700 p-2" onClick={() => { setForm(row); setMessage(''); }}>Editar</button></td></tr>)}</tbody>
+        <tbody>{rows.map(row => <tr key={row.id} className="border-t"><td className="p-3">{row.nome}</td><td>{row.email || row.endereco || (row.preco !== undefined ? `${currency(row.preco)} · Estoque: ${row.estoqueAtual}` : row.tipo ? modalityLabels[row.tipo] || row.tipo : row.descricao)}</td><td>{(row.ativo ?? row.ativa) ? 'Ativo' : 'Inativo'}</td><td><div className="management-actions"><button type="button" disabled={busy} className="text-blue-700 p-2" onClick={() => { setForm(row); setMessage(''); }}>Editar</button>{canChangeStatus && <button type="button" disabled={busy} className={(row.ativo ?? row.ativa) ? 'text-red-700 p-2' : 'border p-2'} onClick={() => toggleStatus(row)}>{(row.ativo ?? row.ativa) ? 'Desativar' : 'Reativar'}</button>}</div></td></tr>)}</tbody>
       </table>{rows.length === 0 && <p className="p-4">Nenhum registro encontrado.</p>}</div>
     </>}
   </section>;

@@ -35,6 +35,14 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('usuario');
   };
 
+  const atualizarUsuario = dados => {
+    setUsuario(current => {
+      const updated = { ...current, ...dados };
+      localStorage.setItem('usuario', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
   const estaAutenticado = () => !!token && !!usuario;
 
   const temPermissao = (perfis) => {
@@ -51,6 +59,7 @@ export const AuthProvider = ({ children }) => {
         loading,
         login,
         logout,
+        atualizarUsuario,
         estaAutenticado,
         temPermissao
       }}

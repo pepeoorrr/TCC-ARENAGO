@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { authAPI } from '../services/api';
 import { Button, Input, Alert, Loading, Card } from '../components/UI';
+import Brand from '../components/Brand';
 
 const Cadastro = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login, estaAutenticado } = useAuth();
   const [formData, setFormData] = useState({
     nome: '',
@@ -139,10 +141,11 @@ const Cadastro = () => {
 
       if (response.data.usuario && response.data.token) {
         setSucesso('Conta criada com sucesso! Redirecionando...');
-        setTimeout(() => {
-          login(response.data.usuario, response.data.token);
-          navigate('/dashboard');
-        }, 1500);
+        login(response.data.usuario, response.data.token);
+        navigate(location.state?.prefillBooking ? '/nova-reserva' : '/dashboard', {
+          replace: true,
+          state: location.state?.prefillBooking ? { prefillBooking: location.state.prefillBooking } : undefined
+        });
       } else {
         setErro(response.data.erro || response.data.mensagem || 'Erro ao criar conta');
       }
@@ -150,7 +153,7 @@ const Cadastro = () => {
       const mensagemErro = 
         error.response?.data?.erro ||
         error.response?.data?.mensagem ||
-        'Erro ao criar conta. Tente novamente.';
+        (error.request ? 'Não foi possível conectar à ArenaGo. Confira se a API está em execução e tente novamente.' : 'Não foi possível criar a conta. Confira os dados e tente novamente.');
       setErro(mensagemErro);
     } finally {
       setCarregando(false);
@@ -168,10 +171,8 @@ const Cadastro = () => {
         <Card className="auth-card">
           {/* Header */}
           <div className="text-center mb-8">
-            <div className="inline-block bg-green-600 text-white rounded-full w-16 h-16 flex items-center justify-center mb-4">
-              <span className="text-2xl font-bold">AG</span>
-            </div>
-            <h1 className="text-3xl font-bold text-gray-800">ArenaGo</h1>
+            <Brand />
+            <h1 className="auth-title">Junte-se à ArenaGo</h1>
             <p className="text-gray-600 text-sm">Seu próximo jogo começa aqui.</p>
           </div>
           <p className="auth-subline">Crie sua conta grátis para consultar horários e organizar suas reservas.</p>
@@ -270,6 +271,7 @@ const Cadastro = () => {
             <p className="text-gray-600 text-sm mb-2">Já tem uma conta?</p>
             <Link
               to="/login"
+              state={location.state}
               className="inline-block text-blue-600 hover:text-blue-800 font-medium"
             >
               Voltar ao Login

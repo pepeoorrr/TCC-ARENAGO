@@ -40,11 +40,16 @@ export const authAPI = {
   redefinirSenha: (token, novaSenha) => api.post('/auth/redefinir-senha', { token, novaSenha })
 };
 
+export const publicAPI = {
+  buscarQuadras: params => api.get('/public/quadras', { params })
+};
+
 // ==================== USUÁRIOS ====================
 
 export const usuariosAPI = {
   obterPerfil: () => api.get('/usuarios/perfil'),
   atualizarPerfil: (dados) => api.put('/usuarios/perfil', dados),
+  alterarSenha: (dados) => api.post('/usuarios/alterar-senha', dados),
   listar: (params) => api.get('/usuarios', { params }),
   obter: (id) => api.get(`/usuarios/${id}`),
   criar: (dados) => api.post('/usuarios', dados),

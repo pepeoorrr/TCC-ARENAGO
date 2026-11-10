@@ -1,27 +1,37 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useLocal, errorMessage, currency } from '../components/Workspace';
 import { Field, CustomerPicker } from '../components/Forms';
 import { quadrasAPI, reservasAPI, disponibilidadeAPI } from '../services/api';
+const ArrowIcon = () => <svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>;
+const modalityName = { BEACH_TENNIS: 'Beach tennis', FUTEVOLEI: 'Futevôlei', VOLEI: 'Vôlei de areia', FUTSAL: 'Futsal', BASQUETE: 'Basquete', TENIS: 'Tênis', OUTRO: 'Outro' };
 export default function Booking() {
-  const { usuario } = useAuth(), { locais } = useLocal(), navigate = useNavigate();
-  const [local, setLocal] = useState(''), [quadras, setQuadras] = useState([]), [quadraId, setQuadra] = useState('');
-  const [data, setData] = useState(''), [horarioInicio, setHora] = useState(''), [duracao, setDuracao] = useState(60), [usuarioId, setUsuario] = useState('');
-  const [slots, setSlots] = useState([]), [error, setError] = useState(''), [busy, setBusy] = useState(false), [loading, setLoading] = useState(false);
+  const { usuario } = useAuth(), { locais } = useLocal(), navigate = useNavigate(), location = useLocation();
+  const prefill = location.state?.prefillBooking || {};
+  const [local, setLocal] = useState(prefill.estabelecimentoId || ''), [quadras, setQuadras] = useState([]), [quadraId, setQuadra] = useState(prefill.quadraId || '');
+  const [data, setData] = useState(prefill.data || ''), [horarioInicio, setHora] = useState(prefill.horarioInicio || ''), [duracao, setDuracao] = useState(60), [usuarioId, setUsuario] = useState('');
+  const [slots, setSlots] = useState([]), [error, setError] = useState(''), [busy, setBusy] = useState(false), [loading, setLoading] = useState(false), [loadingSlots, setLoadingSlots] = useState(false);
   useEffect(() => {
-    let active = true; setQuadras([]); setQuadra(''); setSlots([]); setError('');
+    let active = true; setQuadras([]); setSlots([]); setError('');
     if (!local) return;
     setLoading(true);
-    quadrasAPI.listar({ estabelecimentoId: local }).then(r => { if (active) setQuadras(r.data.filter(q => q.ativa)); })
+    quadrasAPI.listar({ estabelecimentoId: local }).then(r => { if (active) {
+      const activeCourts = r.data.filter(q => q.ativa); setQuadras(activeCourts);
+      const selectedCourt = activeCourts.find(q => q.id === quadraId);
+      if (selectedCourt) setDuracao(selectedCourt.durationPadraoMinutos || 60);
+      else if (quadraId) { setQuadra(''); setHora(''); }
+    } })
       .catch(e => { if (active) setError(errorMessage(e)); }).finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, [local]);
   useEffect(() => {
     let active = true; setSlots([]); setHora('');
     if (!quadraId || !data) return;
+    setLoadingSlots(true);
     disponibilidadeAPI.obter(quadraId, { dataInicio: data, dataFim: data }).then(r => { if (active) setSlots(r.data.disponibilidade[0]?.horarios || []); })
-      .catch(e => { if (active) setError(errorMessage(e)); });
+      .catch(e => { if (active) setError(errorMessage(e)); })
+      .finally(() => { if (active) setLoadingSlots(false); });
     return () => { active = false; };
   }, [quadraId, data]);
   const submit = async e => {
@@ -30,19 +40,22 @@ export default function Booking() {
     catch (e) { setError(errorMessage(e)); } finally { setBusy(false); }
   };
   const quadra = quadras.find(q => q.id === quadraId);
-  return <section className="max-w-2xl space-y-4"><h1 className="text-2xl font-bold">Nova reserva</h1>
+  return <section className="booking-page">
+    <div className="page-heading"><div><span className="page-eyebrow">VAMOS JOGAR?</span><h1>Agende sua quadra</h1><p>Escolha arena, modalidade, data e horário para confirmar sua partida.</p></div><Link className="button button--outline" to="/dashboard">Voltar ao painel</Link></div>
     {error && <p role="alert" className="text-red-700">{error}</p>}
-    <form onSubmit={submit} className="bg-white p-5 rounded shadow space-y-4">
-      <Field label="Local da reserva" required value={local} options={locais.filter(l => l.ativo).map(l => ({ value: l.id, label: l.nome }))} onChange={e => setLocal(e.target.value)} />
-      {loading && <p>Carregando quadras...</p>}
-      <Field label="Quadra" required disabled={!local || loading} value={quadraId} options={quadras.map(q => ({ value: q.id, label: `${q.nome} — ${currency(q.precoHora)}/hora` }))} onChange={e => { setQuadra(e.target.value); setDuracao(quadras.find(q => q.id === e.target.value)?.durationPadraoMinutos || 60); }} />
-      <Field label="Data" type="date" required value={data} onChange={e => setData(e.target.value)} />
-      {slots.length > 0 && <div><p className="text-sm">Horários disponíveis para a duração padrão:</p><div className="flex flex-wrap gap-2 mt-2">{slots.map(s => <button type="button" key={s.hora} disabled={!s.disponivel} className="border p-2 rounded disabled:opacity-30" onClick={() => { setHora(s.hora); setDuracao(s.duracao); }}>{s.hora}</button>)}</div></div>}
-      <Field label="Horário de início" type="time" required value={horarioInicio} onChange={e => setHora(e.target.value)} />
-      <Field label="Duração (minutos)" type="number" min="1" required value={duracao} onChange={e => setDuracao(e.target.value)} />
-      {usuario.perfil !== 'CLIENTE' && <CustomerPicker onSelect={setUsuario} />}
-      {quadra && <p>Aluguel estimado: <strong>{currency(Number(quadra.precoHora) * Number(duracao) / 60)}</strong></p>}
-      <button className="bg-blue-700 text-white p-3 rounded disabled:opacity-50" disabled={busy || !quadraId || (usuario.perfil !== 'CLIENTE' && !usuarioId)}>{busy ? 'Reservando...' : 'Confirmar reserva'}</button>
+    <form onSubmit={submit} className="booking-card">
+      <div className="booking-card__intro"><span>1</span><div><h2>Escolha a quadra</h2><p>Selecione um estabelecimento ativo e a quadra de areia.</p></div></div>
+      <div className="booking-grid"><Field label="Arena" required value={local} options={locais.filter(l => l.ativo).map(l => ({ value: l.id, label: l.nome }))} onChange={e => { setLocal(e.target.value); setQuadra(''); setHora(''); setSlots([]); }} />
+        <Field label="Quadra e modalidade" required disabled={!local || loading} value={quadraId} options={quadras.map(q => ({ value: q.id, label: `${q.nome} · ${modalityName[q.tipo] || q.tipo} · ${currency(q.precoHora)}/h` }))} onChange={e => { setQuadra(e.target.value); setDuracao(quadras.find(q => q.id === e.target.value)?.durationPadraoMinutos || 60); setHora(''); }} />
+      </div>
+      {loading && <p className="booking-hint">Carregando quadras da arena…</p>}
+      <div className="booking-card__intro"><span>2</span><div><h2>Encontre seu horário</h2><p>Veja os horários abertos para a data escolhida.</p></div></div>
+      <div className="booking-grid booking-grid--date"><Field label="Data" type="date" min={new Date().toISOString().slice(0, 10)} required value={data} onChange={e => { setData(e.target.value); setHora(''); }} /><Field label="Duração (minutos)" type="number" min="1" required value={duracao} onChange={e => setDuracao(e.target.value)} /></div>
+      {loadingSlots && <p className="booking-hint">Consultando disponibilidade…</p>}
+      {quadraId && data && !loadingSlots && <div className="booking-slots"><strong>Horários disponíveis</strong><div className="booking-slots__list">{slots.filter(slot => slot.disponivel).map(slot => <button type="button" key={slot.hora} className={horarioInicio === slot.hora ? 'is-selected' : ''} onClick={() => { setHora(slot.hora); setDuracao(slot.duracao); }}>{slot.hora}</button>)}{slots.length > 0 && !slots.some(slot => slot.disponivel) && <p>Nenhum horário disponível nesta data. Escolha outro dia.</p>}{!slots.length && <p>Não há horários configurados para esta quadra.</p>}</div></div>}
+      {usuario.perfil !== 'CLIENTE' && <div className="booking-card__participant"><div className="booking-card__intro"><span>3</span><div><h2>Quem vai jogar?</h2><p>Como gestor, selecione o cliente responsável pela reserva.</p></div></div><CustomerPicker onSelect={setUsuario} /></div>}
+      {quadra && <div className="booking-summary"><span>Valor estimado · {duracao} min</span><strong>{currency(Number(quadra.precoHora) * Number(duracao) / 60)}</strong></div>}
+      <button className="button button--sand booking-submit" disabled={busy || !quadraId || !data || !horarioInicio || (usuario.perfil !== 'CLIENTE' && !usuarioId)}>{busy ? 'Confirmando…' : 'Confirmar reserva'} <ArrowIcon /></button>
     </form>
   </section>;
 }

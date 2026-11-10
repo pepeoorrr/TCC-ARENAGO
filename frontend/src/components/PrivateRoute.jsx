@@ -1,23 +1,19 @@
 import React from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 const PrivateRoute = ({ children, permissoes }) => {
   const { estaAutenticado, temPermissao, loading } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-          <p className="mt-4 text-gray-600">Carregando...</p>
-        </div>
-      </div>
+      <div className="app-loading"><span className="loading-spinner" /> Carregando sua conta ArenaGo…</div>
     );
   }
 
   if (!estaAutenticado()) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" replace state={{ from: { pathname: location.pathname, state: location.state } }} />;
   }
 
   if (permissoes && !temPermissao(permissoes)) {

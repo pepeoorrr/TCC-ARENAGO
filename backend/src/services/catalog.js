@@ -15,7 +15,7 @@ function createCatalog(db) {
     const activeKey = model === 'produto' ? 'ativo' : 'ativa';
     if (body[activeKey] !== undefined) { ensure(typeof body[activeKey] === 'boolean', 'Situação inválida'); data[activeKey] = body[activeKey]; }
     if (model === 'quadra') {
-      ensure(['FUTSAL', 'VOLEI', 'BASQUETE', 'TENIS', 'OUTRO'].includes(input.tipo), 'Modalidade inválida');
+      ensure(['BEACH_TENNIS', 'FUTEVOLEI', 'FUTSAL', 'VOLEI', 'BASQUETE', 'TENIS', 'OUTRO'].includes(input.tipo), 'Modalidade inválida');
       Object.assign(data, { tipo: input.tipo, capacidade: rules.integer(input.capacidade, 'Capacidade'),
         precoHora: rules.money(rules.cents(input.precoHora)), horarioInicio: input.horarioInicio || '06:00',
         horarioFim: input.horarioFim || '22:00', durationPadraoMinutos: rules.integer(input.durationPadraoMinutos ?? 60, 'Duração padrão') });

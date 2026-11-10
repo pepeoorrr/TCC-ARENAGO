@@ -21,6 +21,17 @@ function createAccounts(db, secret) {
       ensure(input.senha === input.confirmarSenha, 'Senhas não conferem');
       return sign(await create(input, 'CLIENTE'));
     },
+    async changePassword(user, input = {}) {
+      ensure(typeof input.senhaAtual === 'string' && input.senhaAtual, 'Senha atual obrigatória');
+      ensure(typeof input.novaSenha === 'string' && input.novaSenha === input.confirmarSenha, 'Confirmação da nova senha não confere');
+      password(input.novaSenha);
+      const current = await db.usuario.findUnique({ where: { id: user.id } });
+      ensure(current?.ativo, 'Usuário não encontrado', 404);
+      ensure(await bcrypt.compare(input.senhaAtual, current.senha), 'Senha atual incorreta', 400);
+      ensure(input.novaSenha !== input.senhaAtual, 'A nova senha deve ser diferente da senha atual');
+      await db.usuario.update({ where: { id: user.id }, data: { senha: await bcrypt.hash(input.novaSenha, 10) } });
+      return { mensagem: 'Senha alterada com sucesso' };
+    },
     async login(input) {
       const email = emailValue(input.email);
       ensure(typeof input.senha === 'string', 'Senha obrigatória');

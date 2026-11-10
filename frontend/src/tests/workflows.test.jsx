@@ -7,13 +7,14 @@ import Management from '../pages/Management';
 import { BillDetail, BillList } from '../pages/Bills';
 import Booking from '../pages/Booking';
 import Workspace from '../components/Workspace';
-import { produtosAPI, categoriasAPI, comandasAPI, estabelecimentosAPI, quadrasAPI, reservasAPI } from '../services/api';
+import ClientDashboard from '../pages/ClientDashboard';
+import { produtosAPI, categoriasAPI, comandasAPI, estabelecimentosAPI, quadrasAPI, reservasAPI, disponibilidadeAPI } from '../services/api';
 const state = vi.hoisted(() => ({ perfil: 'PROPRIETARIO', localId: 'l1' }));
 vi.mock('../context/AuthContext', () => ({ useAuth: () => ({ usuario: { id: 'u', nome: 'Pessoa', perfil: state.perfil }, logout: vi.fn() }) }));
 vi.mock('../components/Workspace', async original => ({ ...(await original()), useLocal: () => ({ localId: state.localId, params: state.localId ? { estabelecimentoId: state.localId } : {}, reload: vi.fn(), locais: [{ id: 'l1', nome: 'Arena A', ativo: true }, { id: 'l2', nome: 'Arena B', ativo: true }] }) }));
 vi.mock('../services/api', () => ({
   produtosAPI: { listar: vi.fn(), criar: vi.fn(), atualizar: vi.fn() }, categoriasAPI: { listar: vi.fn() },
-  estabelecimentosAPI: { listar: vi.fn() }, usuariosAPI: {}, quadrasAPI: { listar: vi.fn() }, reservasAPI: { criar: vi.fn() }, disponibilidadeAPI: { obter: vi.fn() },
+  estabelecimentosAPI: { listar: vi.fn() }, usuariosAPI: {}, quadrasAPI: { listar: vi.fn() }, reservasAPI: { listar: vi.fn(), criar: vi.fn() }, disponibilidadeAPI: { obter: vi.fn() },
   comandasAPI: { listar: vi.fn(), obter: vi.fn(), adicionarItem: vi.fn() }
 }));
 const bill = { id: 'c', usuario: { nome: 'Cliente' }, usuarioId: 'c1', reserva: { usuarioId: 'c1', quadra: { nome: 'Quadra A', estabelecimentoId: 'l1' }, dataReserva: '2030-01-01' }, valorAluguel: '90', subtotalConsumos: '0', total: '90', status: 'ABERTA', itens: [] };
@@ -23,6 +24,8 @@ beforeEach(() => {
   categoriasAPI.listar.mockResolvedValue({ data: [{ id: 'cat1', nome: 'Bebidas', estabelecimentoId: 'l1', ativa: true }] });
   produtosAPI.criar.mockResolvedValue({ data: {} });
   comandasAPI.obter.mockResolvedValue({ data: bill }); comandasAPI.listar.mockResolvedValue({ data: [bill] });
+  reservasAPI.listar.mockResolvedValue({ data: [] });
+  disponibilidadeAPI.obter.mockResolvedValue({ data: { disponibilidade: [{ horarios: [{ hora: '18:00', duracao: 60, disponivel: true }] }] } });
   estabelecimentosAPI.listar.mockResolvedValue({ data: [{ id: 'l1', nome: 'Arena A', ativo: true }, { id: 'l2', nome: 'Arena B', ativo: true }] });
   quadrasAPI.listar.mockResolvedValue({ data: [{ id: 'q1', nome: 'Quadra A', precoHora: 90, ativa: true, durationPadraoMinutos: 60 }] });
 });
@@ -50,6 +53,18 @@ it('erro de gravação permanece visível e mantém formulário', async () => {
   await user.click(screen.getByText('Salvar'));
   expect(await screen.findByRole('alert')).toHaveTextContent('Categoria inválida'); expect(screen.getByLabelText('Nome')).toHaveValue('Suco');
 });
+it('desativa produto mediante confirmação e atualiza o estado da tabela', async () => {
+  const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true);
+  produtosAPI.atualizar.mockResolvedValueOnce({ data: {} });
+  const user = userEvent.setup(); render(management());
+  await screen.findByText('Água');
+  await user.click(screen.getByRole('button', { name: 'Desativar' }));
+  expect(confirm).toHaveBeenCalled();
+  expect(produtosAPI.atualizar).toHaveBeenCalledWith('p1', { ativo: false });
+  expect(await screen.findByRole('status')).toHaveTextContent('Água desativado com sucesso.');
+  expect(screen.getByRole('button', { name: 'Reativar' })).toBeInTheDocument();
+  confirm.mockRestore();
+});
 it('cliente consulta a comanda sem controles operacionais ou consulta de estoque', async () => {
   state.perfil = 'CLIENTE';
   render(<MemoryRouter initialEntries={['/comanda/c']}><Routes><Route path="/comanda/:id" element={<BillDetail />} /></Routes></MemoryRouter>);
@@ -59,18 +74,35 @@ it('cliente consulta a comanda sem controles operacionais ou consulta de estoque
 });
 it('lista de comandas do cliente mostra dados recebidos da API', async () => {
   state.perfil = 'CLIENTE'; render(<MemoryRouter><BillList /></MemoryRouter>);
-  expect(screen.getByText('Carregando...')).toBeInTheDocument();
+  expect(screen.getByText(/Carregando comandas/)).toBeInTheDocument();
   expect(await screen.findByRole('link')).toHaveAttribute('href', '/comanda/c'); expect(screen.getByText('Minhas comandas')).toBeInTheDocument();
 });
 it('nova reserva exige selecionar local e limpa quadra na troca', async () => {
   state.perfil = 'CLIENTE'; const user = userEvent.setup(); render(<MemoryRouter><Booking /></MemoryRouter>);
-  expect(screen.getByLabelText('Quadra')).toBeDisabled();
-  await user.selectOptions(screen.getByLabelText('Local da reserva'), 'l1');
+  expect(screen.getByLabelText('Quadra e modalidade')).toBeDisabled();
+  await user.selectOptions(screen.getByLabelText('Arena'), 'l1');
   await waitFor(() => expect(quadrasAPI.listar).toHaveBeenCalledWith({ estabelecimentoId: 'l1' }));
-  await user.selectOptions(screen.getByLabelText('Quadra'), 'q1');
-  await user.selectOptions(screen.getByLabelText('Local da reserva'), 'l2');
-  await waitFor(() => expect(screen.getByLabelText('Quadra')).toHaveValue(''));
+  await user.selectOptions(screen.getByLabelText('Quadra e modalidade'), 'q1');
+  await user.selectOptions(screen.getByLabelText('Arena'), 'l2');
+  await waitFor(() => expect(screen.getByLabelText('Quadra e modalidade')).toHaveValue(''));
   expect(reservasAPI.criar).not.toHaveBeenCalled();
+});
+it('abre agendamento com a arena, quadra, data e horário escolhidos na busca pública', async () => {
+  state.perfil = 'CLIENTE';
+  render(<MemoryRouter initialEntries={[{ pathname: '/nova-reserva', state: { prefillBooking: { estabelecimentoId: 'l1', quadraId: 'q1', data: '2030-01-02', horarioInicio: '18:00' } } }]}><Booking /></MemoryRouter>);
+  await waitFor(() => expect(quadrasAPI.listar).toHaveBeenCalledWith({ estabelecimentoId: 'l1' }));
+  expect(screen.getByLabelText('Arena')).toHaveValue('l1');
+  expect(screen.getByLabelText('Quadra e modalidade')).toHaveValue('q1');
+  expect(screen.getByLabelText('Data')).toHaveValue('2030-01-02');
+  expect(await screen.findByRole('button', { name: '18:00' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: /confirmar reserva/i })).toBeDisabled();
+  await userEvent.setup().click(screen.getByRole('button', { name: '18:00' }));
+  expect(screen.getByRole('button', { name: /confirmar reserva/i })).toBeEnabled();
+});
+it('dashboard do cliente mostra estado vazio com atalho para buscar quadras', async () => {
+  state.perfil = 'CLIENTE'; render(<MemoryRouter><ClientDashboard /></MemoryRouter>);
+  expect(await screen.findByRole('heading', { name: /seu próximo jogo está esperando/i })).toBeInTheDocument();
+  expect(screen.getByRole('link', { name: /buscar quadras/i })).toHaveAttribute('href', '/');
 });
 it('menu do proprietário não oferece administração de usuários', async () => {
   render(<MemoryRouter><Workspace /></MemoryRouter>);

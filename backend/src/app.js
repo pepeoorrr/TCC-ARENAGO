@@ -5,6 +5,7 @@ const { createCatalog, createEstablishments } = require('./services/catalog');
 const { createReservations } = require('./services/reservations');
 const { createBilling } = require('./services/billing');
 const { createOperations } = require('./services/operations');
+const { searchPublicCourts } = require('./services/publicCatalog');
 const { ensure } = require('./services/errors');
 
 function createApp({ db, secret, now, identifier }) {
@@ -28,6 +29,7 @@ function createApp({ db, secret, now, identifier }) {
   };
   app.get('/', (_req, res) => res.json({ status: 'ok', mensagem: 'ArenaGo API' }));
   app.get('/health', (_req, res) => res.json({ status: 'ok' }));
+  app.get('/public/quadras', handle(req => searchPublicCourts(db, req.query)));
   app.post('/auth/registro', handle(req => accounts.register(req.body), 201));
   app.post('/auth/login', handle(req => accounts.login(req.body)));
   app.post(['/auth/recuperar-senha', '/auth/redefinir-senha'], (_req, res) => res.status(501).json({ erro: 'Recuperação por email ainda não disponível. Contate o administrador.' }));
@@ -39,6 +41,7 @@ function createApp({ db, secret, now, identifier }) {
     } catch (error) { next(error); }
   };
   app.get('/usuarios/perfil', authenticate, handle(req => accounts.profile(req.usuario)));
+  app.post('/usuarios/alterar-senha', authenticate, handle(req => accounts.changePassword(req.usuario, req.body)));
   app.put('/usuarios/perfil', authenticate, handle(async req => ({ usuario: await accounts.update(req.usuario, req.usuario.id, req.body, true), mensagem: 'Perfil atualizado' })));
   app.get('/usuarios/buscar-cliente', authenticate, handle(req => accounts.findCustomer(req.usuario, req.query.email)));
   app.get('/usuarios', authenticate, handle(req => accounts.list(req.usuario, req.query)));

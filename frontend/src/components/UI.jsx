@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useId, useState } from 'react';
 
 export const Button = ({ 
   children, 
@@ -52,21 +52,26 @@ export const Input = ({
 }) => {
   const [senhaVisivel, setSenhaVisivel] = useState(false);
   const ehSenha = type === 'password';
+  const generatedId = useId();
+  const inputId = props.id || generatedId;
 
   return (
     <div className="mb-4">
       {label && (
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <label htmlFor={inputId} className="block text-sm font-medium text-gray-700 mb-2">
           {label} {required && <span className="text-red-600">*</span>}
         </label>
       )}
       <div className="relative">
         <input
+          id={inputId}
           type={ehSenha && senhaVisivel ? 'text' : type}
           value={value}
           onChange={onChange}
           placeholder={placeholder}
           disabled={disabled}
+          aria-invalid={Boolean(error)}
+          aria-describedby={error ? `${inputId}-error` : undefined}
           className={`w-full px-4 py-2 ${ehSenha ? 'pr-12' : ''} border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-600 ${
             error ? 'border-red-600' : 'border-gray-300'
           } ${className}`}
@@ -94,7 +99,7 @@ export const Input = ({
           </button>
         )}
       </div>
-      {error && <p className="text-red-600 text-sm mt-1">{error}</p>}
+      {error && <p id={`${inputId}-error`} className="text-red-600 text-sm mt-1">{error}</p>}
     </div>
   );
 };

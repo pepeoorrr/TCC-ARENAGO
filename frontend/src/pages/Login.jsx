@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { authAPI } from '../services/api';
 import { Button, Input, Alert, Loading, Card } from '../components/UI';
+import Brand from '../components/Brand';
 
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login, estaAutenticado } = useAuth();
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
@@ -60,9 +62,9 @@ const Login = () => {
       if (response.data.usuario && response.data.token) {
         login(response.data.usuario, response.data.token);
         setSucesso('Login realizado com sucesso!');
-        setTimeout(() => {
-          navigate('/dashboard');
-        }, 1000);
+        const prefillBooking = location.state?.prefillBooking || location.state?.from?.state?.prefillBooking;
+        const destination = location.state?.from?.pathname || (prefillBooking ? '/nova-reserva' : '/dashboard');
+        navigate(destination, { replace: true, state: prefillBooking ? { prefillBooking } : location.state?.from?.state });
       } else {
         setErro(response.data.erro || response.data.mensagem || 'Erro ao fazer login');
       }
@@ -70,7 +72,7 @@ const Login = () => {
       const mensagemErro = 
         error.response?.data?.erro ||
         error.response?.data?.mensagem ||
-        'Erro ao conectar com o servidor. Verifique suas credenciais.';
+        (error.request ? 'Não foi possível conectar à ArenaGo. Confira se a API está em execução e tente novamente.' : 'Não foi possível entrar. Verifique os dados e tente novamente.');
       setErro(mensagemErro);
     } finally {
       setCarregando(false);
@@ -88,10 +90,8 @@ const Login = () => {
         <Card className="auth-card">
           {/* Header */}
           <div className="text-center mb-8">
-            <div className="inline-block bg-blue-600 text-white rounded-full w-16 h-16 flex items-center justify-center mb-4">
-              <span className="text-2xl font-bold">AG</span>
-            </div>
-            <h1 className="text-3xl font-bold text-gray-800">ArenaGo</h1>
+            <Brand />
+            <h1 className="auth-title">Entre na ArenaGo</h1>
             <p className="text-gray-600 text-sm">Bom jogo começa com uma boa reserva.</p>
           </div>
           <p className="auth-subline">Entre na sua conta para organizar sua próxima partida.</p>
@@ -147,6 +147,7 @@ const Login = () => {
               <p className="text-gray-600 text-sm mb-2">Não tem uma conta?</p>
               <Link
                 to="/cadastro"
+                state={location.state}
                 className="inline-block bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors font-medium"
               >
                 Criar Conta

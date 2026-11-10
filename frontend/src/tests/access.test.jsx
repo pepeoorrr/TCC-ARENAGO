@@ -25,6 +25,6 @@ describe('controle de acesso e navegação', () => {
   it('aguarda atualização da sessão antes de decidir acesso', () => {
     state.loading = true;
     render(<MemoryRouter><PrivateRoute><p>Privado</p></PrivateRoute></MemoryRouter>);
-    expect(screen.getByText('Carregando...')).toBeInTheDocument(); expect(screen.queryByText('Privado')).not.toBeInTheDocument();
+    expect(screen.getByText(/Carregando sua conta ArenaGo/)).toBeInTheDocument(); expect(screen.queryByText('Privado')).not.toBeInTheDocument();
   });
 });

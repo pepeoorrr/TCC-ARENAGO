@@ -7,7 +7,7 @@ import { Button, Input, Card, Alert, Loading } from '../components/UI';
 
 const Perfil = () => {
   const navigate = useNavigate();
-  const { usuario, logout } = useAuth();
+  const { atualizarUsuario } = useAuth();
   const { addToast } = useToast();
   const [formData, setFormData] = useState({
     nome: '',
@@ -21,6 +21,11 @@ const Perfil = () => {
   const [sucesso, setSucesso] = useState('');
   const [erros, setErros] = useState({});
   const [modo, setModo] = useState('visualizar'); // visualizar ou editar
+  const [mostrarTrocaSenha, setMostrarTrocaSenha] = useState(false);
+  const [senhaForm, setSenhaForm] = useState({ senhaAtual: '', novaSenha: '', confirmarSenha: '' });
+  const [erroSenha, setErroSenha] = useState('');
+  const [sucessoSenha, setSucessoSenha] = useState('');
+  const [salvandoSenha, setSalvandoSenha] = useState(false);
 
   useEffect(() => {
     carregarPerfil();
@@ -102,6 +107,7 @@ const Perfil = () => {
         setSucesso('Perfil atualizado com sucesso!');
         addToast('Perfil atualizado com sucesso!', 'success');
         setModo('visualizar');
+        atualizarUsuario({ nome: response.data.usuario.nome, telefone: response.data.usuario.telefone });
         // Atualizar dados locais
         setFormData(prev => ({
           ...prev,
@@ -123,30 +129,31 @@ const Perfil = () => {
     }
   };
 
+  const alterarSenha = async event => {
+    event.preventDefault();
+    setErroSenha('');
+    setSucessoSenha('');
+    if (senhaForm.novaSenha.length < 6) { setErroSenha('A nova senha deve ter pelo menos 6 caracteres.'); return; }
+    if (senhaForm.novaSenha !== senhaForm.confirmarSenha) { setErroSenha('A confirmação da nova senha não confere.'); return; }
+    setSalvandoSenha(true);
+    try {
+      const { data } = await usuariosAPI.alterarSenha(senhaForm);
+      setSucessoSenha(data.mensagem || 'Senha alterada com sucesso.');
+      setSenhaForm({ senhaAtual: '', novaSenha: '', confirmarSenha: '' });
+      setMostrarTrocaSenha(false);
+      addToast(data.mensagem || 'Senha alterada com sucesso.', 'success');
+    } catch (error) {
+      const message = error.response?.data?.erro || 'Não foi possível alterar a senha. Tente novamente.';
+      setErroSenha(message);
+      addToast(message, 'error');
+    } finally { setSalvandoSenha(false); }
+  };
+
   if (carregando) return <Loading />;
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      {/* Header */}
-      <header className="bg-white shadow">
-        <div className="max-w-4xl mx-auto px-4 py-6 sm:px-6 lg:px-8 flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Meu Perfil</h1>
-            <p className="text-gray-600">Gerencie suas informações pessoais</p>
-          </div>
-          <div className="space-x-3">
-            <Button variant="secondary" onClick={() => navigate('/dashboard')}>
-              Voltar
-            </Button>
-            <Button variant="danger" onClick={logout}>
-              Sair
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+    <section className="profile-page">
+        <div className="page-heading"><div><span className="page-eyebrow">SUA CONTA</span><h1>Meu perfil</h1><p>Gerencie seus dados e mantenha sua conta protegida.</p></div><Button variant="secondary" onClick={() => navigate('/dashboard')}>Voltar ao painel</Button></div>
         {erro && <Alert type="error" message={erro} onClose={() => setErro('')} />}
         {sucesso && <Alert type="success" message={sucesso} />}
 
@@ -216,13 +223,6 @@ const Perfil = () => {
                   >
                     Editar Perfil
                   </Button>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={() => navigate('/dashboard')}
-                  >
-                    Voltar ao Dashboard
-                  </Button>
                 </>
               ) : (
                 <>
@@ -252,20 +252,21 @@ const Perfil = () => {
         </Card>
 
         {/* Seção de Segurança */}
-        <Card className="mt-8">
+        <Card className="profile-security-card mt-8">
           <h2 className="text-lg font-semibold mb-4">Segurança</h2>
           <p className="text-gray-600 mb-4">
-            Altere sua senha para manter sua conta segura.
+            Troque sua senha periodicamente e não a compartilhe com outras pessoas.
           </p>
-          <Button
-            variant="secondary"
-            onClick={() => navigate('/alterar-senha')}
-          >
-            Alterar Senha
-          </Button>
+          {sucessoSenha && <Alert type="success" message={sucessoSenha} />}
+          {erroSenha && <Alert type="error" message={erroSenha} onClose={() => setErroSenha('')} />}
+          {!mostrarTrocaSenha ? <Button variant="secondary" onClick={() => { setMostrarTrocaSenha(true); setSucessoSenha(''); }}>Alterar senha</Button> : <form className="password-change-form" onSubmit={alterarSenha}>
+            <Input label="Senha atual" type="password" required autoComplete="current-password" value={senhaForm.senhaAtual} onChange={event => setSenhaForm({ ...senhaForm, senhaAtual: event.target.value })} disabled={salvandoSenha} />
+            <Input label="Nova senha" type="password" required minLength={6} autoComplete="new-password" placeholder="Mínimo de 6 caracteres" value={senhaForm.novaSenha} onChange={event => setSenhaForm({ ...senhaForm, novaSenha: event.target.value })} disabled={salvandoSenha} />
+            <Input label="Confirmar nova senha" type="password" required minLength={6} autoComplete="new-password" value={senhaForm.confirmarSenha} onChange={event => setSenhaForm({ ...senhaForm, confirmarSenha: event.target.value })} disabled={salvandoSenha} />
+            <div className="flex gap-3"><Button type="submit" disabled={salvandoSenha}>{salvandoSenha ? 'Atualizando...' : 'Salvar nova senha'}</Button><Button type="button" variant="secondary" disabled={salvandoSenha} onClick={() => { setMostrarTrocaSenha(false); setSenhaForm({ senhaAtual: '', novaSenha: '', confirmarSenha: '' }); setErroSenha(''); }}>Cancelar</Button></div>
+          </form>}
         </Card>
-      </main>
-    </div>
+    </section>
   );
 };
 

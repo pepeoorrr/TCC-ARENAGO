@@ -3,7 +3,7 @@ const { ensure } = require('./errors');
 const access = require('./access');
 const rules = require('./rules');
 const { transaction, audit } = require('./transaction');
-const include = { quadra: true, usuario: { select: access.customer } };
+const include = { quadra: { include: { estabelecimento: { select: { id: true, nome: true, endereco: true } } } }, usuario: { select: access.customer } };
 
 function createReservations(db, { now = () => new Date(), identifier = randomUUID } = {}) {
   const busy = async (tx, quadraId, values, except) => {
